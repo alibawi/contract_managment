@@ -8,6 +8,11 @@ import ContractsList from './pages/contracts/ContractsList'
 import AgreementsList from './pages/agreements/AgreementsList'
 import Resolve from './pages/agreements/Resolve'
 import Simulator from './pages/agreements/Simulator'
+import AmendmentDetail from './pages/amendments/AmendmentDetail'
+import AmendmentEditor from './pages/amendments/AmendmentEditor'
+import AmendmentsList from './pages/amendments/AmendmentsList'
+import Renewals from './pages/amendments/Renewals'
+import { VersionCompare } from './pages/amendments/Tabs'
 import Health from './pages/Health'
 import Delegations from './pages/workflow/Delegations'
 import ApprovalStages from './pages/workflow/ApprovalStages'
@@ -33,6 +38,12 @@ export default function App() {
         <Route path="/agreements" element={<AgreementsList />} />
         <Route path="/agreements/simulator" element={<Simulator />} />
         <Route path="/agreements/resolve" element={<Resolve />} />
+        <Route path="/contracts/:id/amend" element={<AmendmentEditor key={pathname} />} />
+        <Route path="/contracts/:id/amend/:aid" element={<AmendmentEditor key={pathname} />} />
+        <Route path="/contracts/:id/amendments/:aid" element={<AmendmentDetail key={pathname} />} />
+        <Route path="/contracts/:id/versions/compare" element={<VersionCompare />} />
+        <Route path="/amendments" element={<AmendmentsList />} />
+        <Route path="/renewals" element={<Renewals />} />
         <Route path="/health" element={<Health />} />
         <Route path="*" element={<Home />} />
       </Routes>

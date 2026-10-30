@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { ConfidentialityBadge, ContractActionBar, ContractStatusBadge } from '../../components/contract'
 import { PageHeader } from '../../components/Layout'
 import { Async, EmptyBlock } from '../../components/states'
@@ -7,6 +7,7 @@ import { Tabs } from '../../components/ui'
 import { directionShort, profileLabel } from '../../data/contractMeta'
 import { daysTo, fmtDate, money } from '../../data/format'
 import { canSee, noticeDeadline, partnerName, typeOf, userName } from '../../data/lifecycle'
+import { predecessorOf, successorOf } from '../../data/renewal'
 import { getSetting } from '../../data/settings'
 import { useStore } from '../../data/store'
 import { useApi } from '../../lib/useApi'
@@ -14,6 +15,8 @@ import { ApprovalPanel } from '../workflow/ApprovalPanel'
 import { ESignPanel } from '../workflow/ESignPanel'
 import { AgreementLinesTab } from '../agreements/AgreementLines'
 import { AgreementDocs, FulfillmentTab } from '../agreements/Fulfillment'
+import { AmendmentsTab, VersionsTab } from '../amendments/Tabs'
+import { RenewButton } from '../amendments/Renewals'
 import { AttachmentsTab, GeneralTab, LinksTab, LinesTab, PartiesTab, SignaturesTab, SoonTab, TimelineTab } from './tabs'
 
 type Tab = 'general' | 'parties' | 'lines' | 'terms' | 'attachments' | 'signatures' | 'approvals' | 'amendments' | 'versions' | 'fulfillment' | 'links' | 'obligations' | 'financial' | 'service' | 'timeline'
@@ -34,6 +37,7 @@ export default function ContractCard() {
         const t = typeOf(db, c)
         const left = c.endDate ? daysTo(c.endDate) : undefined
         const nd = noticeDeadline(c)
+        const pred = predecessorOf(db, c), succ = successorOf(db, c)
         const feature = (k: 'Obligations' | 'Templates' | 'Service') => getSetting<boolean>(db, `Feature.${k}`)
         const tabs: { id: Tab; label: string; count?: number }[] = [
           { id: 'general', label: 'البيانات العامة' },
@@ -62,8 +66,8 @@ export default function ContractCard() {
             case 'links': return <div className="space-y-4">{c.profile === 'Agreement' && <AgreementDocs c={c} />}<LinksTab c={c} /></div>
             case 'timeline': return <TimelineTab c={c} />
             case 'terms': return <SoonTab title="البنود القانونية" module="القوالب والطباعة" />
-            case 'amendments': return <SoonTab title="الملاحق" module="الملاحق والنسخ" />
-            case 'versions': return <SoonTab title="النسخ" module="الملاحق والنسخ" />
+            case 'amendments': return <AmendmentsTab c={c} />
+            case 'versions': return <VersionsTab c={c} />
             case 'fulfillment': return <FulfillmentTab c={c} />
             case 'obligations': return <SoonTab title="الالتزامات" module="الالتزامات والمالية" />
             case 'financial': return <SoonTab title="الملخص المالي" module="الالتزامات والمالية" />
@@ -74,7 +78,13 @@ export default function ContractCard() {
           <div>
             <PageHeader crumbs={[{ label: 'العقود', to: '/contracts' }, { label: c.number }]} title={c.title}
               badge={<span className="flex items-center gap-1.5"><ContractStatusBadge status={c.status} /><ConfidentialityBadge level={c.confidentiality} /></span>}
-              actions={<ContractActionBar contract={c} />} />
+              actions={<><RenewButton c={c} /><ContractActionBar contract={c} /></>} />
+            {(pred || succ) && (
+              <div className="mb-3 flex flex-wrap gap-4 rounded-md bg-sky-50 px-3 py-2 text-xs text-sky-900">
+                {pred && <span>جُدِّد من: <Link className="underline" to={`/contracts/${pred.id}`} dir="ltr">{pred.number}</Link></span>}
+                {succ && <span>العقد اللاحق: <Link className="underline" to={`/contracts/${succ.id}`} dir="ltr">{succ.number}</Link> ({succ.status === 'Draft' ? 'مسودة' : succ.status})</span>}
+              </div>
+            )}
             <div className="card mb-4 grid grid-cols-2 gap-x-6 gap-y-3 p-4 text-sm md:grid-cols-4 xl:grid-cols-6">
               {[
                 ['الرقم', <span key="n" dir="ltr">{c.number}</span>],

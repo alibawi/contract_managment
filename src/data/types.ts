@@ -74,7 +74,7 @@ export interface Contract {
   startDate: string; endDate?: string; signatureDate?: string; effectiveDate?: string; terminationDate?: string
   renewalPolicy: RenewalPolicy; noticePeriodDays?: number; autoRenewTermMonths?: number; reminderDaysOverride?: string
   confidentiality: Confidentiality; language: 'ar'; externalReference?: string
-  parentContractId?: string; renewedFromContractId?: string
+  parentContractId?: string; renewedFromContractId?: string; successorContractId?: string
   agreementMode?: 'Specific' | 'General'; overridesPrices: boolean
   closureReason?: ClosureReason; activatedOn?: string; activatedBy?: string
   description: string; internalNotes: string; createdBy: string; createdAt: string
@@ -165,6 +165,35 @@ export interface LedgerEntry {
 export interface LineBalance { relQ: number; relV: number; fulQ: number; fulV: number; invQ: number; invV: number }
 export interface DeliveryScheduleItem { id: string; lineId: string; dueDate: string; quantity: number; value?: number; note: string }
 
+// ───────────── Module 4: amendments, versions, renewal ─────────────
+export type AmendmentType = 'ExtendTerm' | 'ChangeValue' | 'ChangeLines' | 'ChangeParties' | 'ChangeTerms' | 'Other'
+export type AmendmentStatus = 'Draft' | 'PendingApproval' | 'Approved' | 'Applied' | 'Rejected' | 'Cancelled'
+export type HeaderField = 'endDate' | 'contractValue' | 'renewalPolicy' | 'noticePeriodDays' | 'autoRenewTermMonths' | 'deliveryTerms' | 'paymentTermId' | 'description'
+export interface HeaderChange { path: HeaderField; oldValue: string | number | undefined; newValue: string | number | undefined }
+export type LineFields = Partial<Pick<ContractLine, 'agreedQuantity' | 'agreedValue' | 'unitPrice' | 'discountPercent' | 'minRelease' | 'maxRelease' | 'validTo' | 'notes'>>
+/** Add creates a line with a new lineNum (never reused); Change edits the listed fields; Close keeps the line but stops new releases. */
+export interface LineOp {
+  op: 'Add' | 'Change' | 'Close'; lineNum?: number; fields?: LineFields; old?: LineFields
+  add?: Pick<ContractLine, 'itemId' | 'categoryId' | 'includeSubcategories' | 'description' | 'uomId' | 'commitmentType' | 'agreedQuantity' | 'agreedValue' | 'unitPrice' | 'discountPercent' | 'priceFixed' | 'enforceMax'>
+}
+export interface PartyOp { op: 'Add' | 'Change' | 'Remove'; partyId?: string; fields?: Partial<Pick<ContractParty, 'name' | 'role' | 'contactName' | 'email' | 'phone' | 'signatoryTitle'>>; old?: Partial<ContractParty> }
+export interface ContractAmendment {
+  id: string; contractId: string; amendmentNo: number; type: AmendmentType; status: AmendmentStatus; reason: string; effectiveDate: string; baseVersionNo: number
+  header: HeaderChange[]; lineOps: LineOp[]; partyOps: PartyOp[]; approvalRequestId?: string
+  appliedVersionNo?: number; appliedOn?: string; appliedBy?: string; createdBy: string; createdAt: string; decidedAt?: string
+}
+export interface VersionPayload {
+  header: Record<string, string | number | undefined>
+  terms: Record<string, string | number | undefined>
+  parties: Pick<ContractParty, 'id' | 'role' | 'name' | 'contactName' | 'email' | 'phone' | 'signatoryTitle'>[]
+  lines: Pick<ContractLine, 'lineNum' | 'itemId' | 'categoryId' | 'description' | 'commitmentType' | 'agreedQuantity' | 'agreedValue' | 'unitPrice' | 'discountPercent' | 'minRelease' | 'maxRelease' | 'validTo' | 'status' | 'notes'>[]
+  signatures: { role: string; signerName: string; signedOn: string }[]
+}
+export interface ContractVersion {
+  id: string; contractId: string; versionNo: number; reason: 'Activation' | 'Amendment' | 'Renewal'; amendmentId?: string
+  payload: VersionPayload; payloadHash: string; createdOn: string; createdBy: string
+}
+
 export interface DB {
   /** Current role and user (role switcher). */
   role: RoleId
@@ -211,4 +240,6 @@ export interface DB {
   ledger: LedgerEntry[]
   balances: Record<string, LineBalance>
   schedules: DeliveryScheduleItem[]
+  amendments: ContractAmendment[]
+  versions: ContractVersion[]
 }

@@ -1,14 +1,16 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { setToday } from './asof'
 import { nowStamp, uid } from './format'
+import { applyDueAmendments } from './amendments'
 import { syncTime } from './lifecycle'
+import { autoRenew } from './renewal'
 import { can as canRole } from './permissions'
 import { seed } from './seed'
 import type { AppUser, DB, Perm, RoleId } from './types'
 
 const KEY = 'enki-contracts-mock'
 /** Bump whenever the data model or seed changes — stored data with another version is discarded and reseeded. */
-export const DATA_VERSION = 6
+export const DATA_VERSION = 7
 
 type Toast = { msg: string; tone: 'ok' | 'err' }
 
@@ -118,6 +120,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addAudit(d, 'demo', 'asOf', 'تغيير التاريخ التجريبي', date)
       const n = syncTime(d)
       if (n) addAudit(d, 'demo', 'expiry', `انتهاء ${n} عقد/عقود تلقائياً`, date)
+      const am = applyDueAmendments(d)
+      if (am) addAudit(d, 'demo', 'amendments', `تطبيق ${am} ملحق/ملاحق عند حلول تاريخ السريان`, date)
+      const rn = autoRenew(d)
+      if (rn) addAudit(d, 'demo', 'renewal', `إنشاء ${rn} عقد/عقود تجديد تلقائي`, date)
     }, `التاريخ التجريبي: ${date}`), [run])
 
   return (

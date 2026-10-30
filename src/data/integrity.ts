@@ -1,5 +1,6 @@
 // Referential-integrity checks over the seed/DB. Used by scripts/integrity-check.ts (npm run check) and the /health screen.
 // Module steps append their own checks (ledger = balances, version continuity, ...).
+import { hashOf } from './amendments'
 import { COUNTERS, hasDrift, signsOf } from './fulfillment'
 import type { DB } from './types'
 
@@ -24,7 +25,7 @@ export function checkFoundation(db: DB): string[] {
   if (!db.users.some((u) => u.id === db.userId && u.role === db.role)) errs.push('current user does not match current role')
   const roles = new Set(db.users.map((u) => u.role))
   Object.keys(db.rolePerms).forEach((r) => { if (!roles.has(r as never)) errs.push(`no user has role ${r}`) })
-  errs.push(...checkContracts(db), ...checkWorkflow(db), ...checkAgreements(db))
+  errs.push(...checkContracts(db), ...checkWorkflow(db), ...checkAgreements(db), ...checkAmendments(db))
   return errs
 }
 
@@ -130,5 +131,34 @@ export function checkAgreements(db: DB): string[] {
   db.lines.forEach((l) => { if (hasDrift(db, l.id)) errs.push(`line ${l.id}: balance differs from ledger sum`) })
   const lines = new Set(db.lines.map((l) => l.id))
   db.schedules.forEach((s) => { if (!lines.has(s.lineId)) errs.push(`schedule ${s.id}: unknown line`) })
+  return errs
+}
+
+/** Module 4: versions are contiguous, hashes match, one open amendment per contract, renewal links are symmetric. */
+export function checkAmendments(db: DB): string[] {
+  const errs: string[] = []
+  const cs = new Map(db.contracts.map((c) => [c.id, c]))
+  db.contracts.forEach((c) => {
+    const vs = db.versions.filter((v) => v.contractId === c.id).sort((a, b) => a.versionNo - b.versionNo)
+    if (c.versionNo >= 1) {
+      if (vs.length !== c.versionNo || vs.some((v, i) => v.versionNo !== i + 1)) errs.push(`contract ${c.id}: versions not contiguous 1..${c.versionNo}`)
+      if (vs[0] && vs[0].reason === 'Amendment') errs.push(`contract ${c.id}: first version is an amendment`)
+    } else if (vs.length) errs.push(`contract ${c.id}: versions on a never-activated contract`)
+    if (c.successorContractId) {
+      const s = cs.get(c.successorContractId)
+      if (!s || s.renewedFromContractId !== c.id) errs.push(`contract ${c.id}: successor link not symmetric`)
+    }
+    if (c.renewedFromContractId && cs.get(c.renewedFromContractId)?.successorContractId !== c.id) errs.push(`contract ${c.id}: predecessor link not symmetric`)
+    const nums = db.lines.filter((l) => l.contractId === c.id).map((l) => l.lineNum)
+    if (new Set(nums).size !== nums.length) errs.push(`contract ${c.id}: duplicate line numbers`)
+    if (db.amendments.filter((a) => a.contractId === c.id && ['Draft', 'PendingApproval', 'Approved'].includes(a.status)).length > 1) errs.push(`contract ${c.id}: more than one open amendment`)
+  })
+  db.versions.forEach((v) => { if (hashOf(v.payload) !== v.payloadHash) errs.push(`version ${v.id}: hash mismatch`) })
+  db.amendments.forEach((a) => {
+    if (!cs.has(a.contractId)) errs.push(`amendment ${a.id}: unknown contract`)
+    if (a.status === 'Applied' && !db.versions.some((v) => v.contractId === a.contractId && v.amendmentId === a.id && v.versionNo === a.appliedVersionNo)) errs.push(`amendment ${a.id}: applied without its version`)
+    if (a.status === 'PendingApproval' && !db.approvalRequests.some((r) => r.subjectId === a.id && r.status === 'Pending')) errs.push(`amendment ${a.id}: pending without an open request`)
+    if (a.status === 'Approved' && !db.approvalRequests.some((r) => r.subjectId === a.id && r.status === 'Approved')) errs.push(`amendment ${a.id}: approved without an approved request`)
+  })
   return errs
 }

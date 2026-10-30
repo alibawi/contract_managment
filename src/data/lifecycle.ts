@@ -1,6 +1,7 @@
 // Contract state machine and business rules BR-C-01…15 (plan doc 03 T1–T15, doc 02 §2.1–2.2).
 // Module 2 replaces the approval stub (submit/approve/reject) with the Elsa stage engine; everything else stays.
 import { addDays, today } from './asof'
+import { createVersion } from './amendments'
 import { decide, eligibility, openRequest, startApproval } from './approval'
 import { rateOn } from './currency'
 import { nowStamp, uid } from './format'
@@ -129,6 +130,14 @@ export function allowedActions(db: DB, c: Contract): ActionDef[] {
   return out
 }
 
+/** BR-M-07: when a renewal successor activates, its predecessor closes with reason Renewed. */
+function closePredecessor(d: DB, c: Contract, by: string) {
+  const p = c.renewedFromContractId ? d.contracts.find((x) => x.id === c.renewedFromContractId) : undefined
+  if (!p || !['Active', 'OnHold', 'Expired'].includes(p.status)) return
+  d.history.push({ id: uid('h'), contractId: p.id, from: p.status, to: 'Closed', byUserId: by, at: nowStamp(), reason: `جُدِّد بالعقد ${c.number}` })
+  p.status = 'Closed'; p.closureReason = 'Renewed'
+}
+
 export const record = (d: DB, c: Contract, to: ContractStatus, reason?: string) => {
   d.history.push({ id: uid('h'), contractId: c.id, from: c.status, to, byUserId: d.userId, at: nowStamp(), reason })
   d.audit.push({ id: uid('aud'), at: nowStamp(), userId: d.userId, entity: 'contract', entityId: c.id, action: `status:${c.status}->${to}`, detail: reason ?? '' })
@@ -181,6 +190,8 @@ export function perform(d: DB, id: string, action: ActionId, p: { reason?: strin
       c.signatureDate = d.signatures.filter((s) => s.contractId === c.id).map((s) => s.signedOn).sort().pop() ?? c.signatureDate
       if (c.currency !== 'IQD') c.exchangeRate = rateOn(d, c.currency, today()) // BR-C-07 snapshot
       record(d, c, 'Active')
+      createVersion(d, c, c.renewedFromContractId ? 'Renewal' : 'Activation')
+      closePredecessor(d, c, d.userId)
       return null
     }
     case 'suspend': record(d, c, 'OnHold', p.reason); c.internalNotes = p.reason ?? c.internalNotes; return null
@@ -218,6 +229,10 @@ export function syncTime(d: DB): number {
       d.history.push({ id: uid('h'), contractId: c.id, from: c.status, to: 'Active', byUserId: 'system', at: `${d.asOf}T00:10`, reason: 'حلّ تاريخ السريان واكتملت التواقيع' })
       d.audit.push({ id: uid('aud'), at: nowStamp(), userId: 'system', entity: 'contract', entityId: c.id, action: 'status:auto-activate', detail: c.number })
       c.status = 'Active'
+      const prev = d.userId; d.userId = 'system'
+      createVersion(d, c, c.renewedFromContractId ? 'Renewal' : 'Activation', undefined, `${d.asOf}T00:10`)
+      d.userId = prev
+      closePredecessor(d, c, 'system')
       n++
     }
     if ((c.status === 'Active' || c.status === 'OnHold') && c.endDate && c.endDate < d.asOf) {

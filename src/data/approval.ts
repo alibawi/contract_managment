@@ -44,7 +44,8 @@ export function eligibility(db: DB, req: ApprovalRequest | undefined, userId: st
   const direct = stage.userId === userId
   const del = direct ? undefined : delegationFor(db, stage.userId, userId, c)
   if (!direct && !del) return { ok: false, stageNo: stage.no, reason: `المرحلة ${stage.no} (${stage.label}) بانتظار ${stageUser?.name ?? stage.userId}` }
-  if (c.createdBy === userId && !getSetting<boolean>(db, 'Approval.AllowCreatorApproval')) return { ok: false, stageNo: stage.no, reason: 'لا يجوز لمنشئ العقد اعتماده (فصل المهام)' }
+  const creator = req.subjectType === 'Amendment' ? db.amendments.find((a) => a.id === req.subjectId)?.createdBy : c.createdBy
+  if (creator === userId && !getSetting<boolean>(db, 'Approval.AllowCreatorApproval')) return { ok: false, stageNo: stage.no, reason: 'لا يجوز لمنشئ العقد اعتماده (فصل المهام)' }
   if (stage.isLegalReview && !canRole(db.rolePerms, user.role, 'Contracts.ViewConfidential')) return { ok: false, stageNo: stage.no, reason: 'مرحلة المراجعة القانونية تتطلب صلاحية «عرض العقود السرية»' }
   return { ok: true, onBehalfOf: del ? stage.userId : undefined, stageNo: stage.no }
 }

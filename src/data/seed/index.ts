@@ -5,6 +5,7 @@ import type { DB } from '../types'
 import { contractTypes, contractsSeed } from './contracts'
 import * as s from './shared'
 import { agreementsSeed } from './agreements'
+import { amendmentsSeed } from './amendments'
 import { workflowSeed } from './workflow'
 
 /** Fresh demo database. Module seeds (contracts, agreements, ...) are merged here by each module step. */
@@ -51,8 +52,11 @@ export function seed(): DB {
     ledger: [],
     balances: {},
     schedules: [],
+    amendments: [],
+    versions: [],
   }
   workflowSeed(db)
   agreementsSeed(db)
+  amendmentsSeed(db)
   return db
 }

@@ -124,3 +124,26 @@
 **Verification (actual):** `tsc -b` clean, `npm run build` ok, `npm run check` → integrity OK. `npm run check:agreements` (new, same engine code): SO 10 → receipt 6 → bill 6 → return 2 (with stock) → order cancel, edit delta, USD document on IQD contract and IQD on USD under both rate sources, Warn / None / Block+Rollback / Block+KeepAndAlert, restore off, direct invoice with stock = 3 entries, drift + recalculate, resolver (specific and general) — all pass. Browser: list KPIs and 15 rows, c-01 lines / fulfillment / documents tabs, simulator preview (Warn warning), Block+Rollback refused (5 docs) then KeepAndAlert kept (6 docs, entry «تجاوز الحد»), resolver result, Draft line dialog, schedule dialog with Met / Late / Upcoming.
 
 **Next step:** owner review, then module 4 «amendments».
+
+## 2026-10-30 — Module 4: amendments (4.1–4.8)
+
+**Module / screen:** amendments — amendments tab M1, editor M2, detail M3, versions tab M4, version compare M5, renewal dialog M6, renewals due M7, all-amendments list with KPIs.
+
+**Completed**
+- `amendments.ts`: change sets (header fields, line add/change/close, party add/change/remove), one open amendment per contract, stale check, counter floor (BR-M-03), submit through the Elsa engine with the route chosen by the value change (≤100M IQD two stages, above three), approve/reject, cancel, apply (new immutable version, history row, expired contract revived by an extension), `applyDueAmendments` for future effective dates, snapshot + short cyrb53 hash + field-level diff.
+- `renewal.ts`: manual successor (Draft, open lines renumbered from 1, counters reset, one successor per contract), auto-renewal once at the notice deadline when the demo date advances, renewals-due list; `lifecycle.ts` writes version 1 on activation (reason Renewal for successors) and closes the predecessor with reason Renewed.
+- Seed: 25 versions, 8 amendments (4 applied, pending at stage 2 of 3, approved with a future date, draft, rejected), renewal chain c-21→c-22 and one auto-created successor (c-03→c-31). `npm run check` verifies version continuity, hashes, one open amendment per contract, symmetric renewal links.
+- Screens as listed; Tasks inbox now routes amendment tasks to the amendment engine; contract card shows predecessor/successor links and a renew button.
+
+**Key design decisions**
+- Approval route uses the absolute value change of the amendment, not the contract value.
+- Amendment creator cannot approve (separation of duties uses the amendment's creator).
+- Applying is blocked until the effective date; the demo date advance applies due amendments by «النظام».
+- Auto-renewal can be stopped only by changing the renewal policy with an amendment before the notice deadline.
+- Terms group in a version = delivery terms, payment term, description (clauses arrive with module 6).
+
+**Issues / deferred:** version snapshots do not include template clauses yet (module 6); no notification is sent on auto-renewal beyond the audit row.
+
+**Verification (actual):** `tsc -b` clean, `npm run build` ok, `npm run check` → integrity OK. `npm run check:amendments` (same engine): value + quantity amendment → three-stage approval → apply → v1/v2 compare, ledger untouched, cut below consumed refused, second open amendment refused, stale refused, creator cannot approve, future-dated amendment applied by the demo date, expired contract renewed (lines 1..n, counters reset, one successor, predecessor closed as Renewed on activation), grace window, auto-renewal once, tamper detected — all pass. Browser: amendments and versions tabs of c-01, v1/v2 compare (3 differences), pending amendment detail (stage 2 of 3, buttons disabled for admin with the reason), renewals list with KPIs, editor with the counter floor error then a successful submit.
+
+**Next step:** owner review, then module 5 «obligations-finance».

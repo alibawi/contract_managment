@@ -7,6 +7,7 @@ import { ListView } from '../../components/ListView'
 import { Field, Modal, Tabs } from '../../components/ui'
 import { delegationFor, eligibility, tasksFor } from '../../data/approval'
 import { daysTo, fmtDate, money } from '../../data/format'
+import { decideAmendment } from '../../data/amendments'
 import { perform, userName } from '../../data/lifecycle'
 import { useStore } from '../../data/store'
 import type { TaskItem } from '../../data/types'
@@ -58,7 +59,7 @@ export default function Tasks() {
     if (!dlg) return
     if (dlg.decision === 'reject' && !comment.trim()) return setErr('سبب الرفض مطلوب')
     let failure = ''
-    const ok = run((d) => { const e = perform(d, dlg.t.contractId, dlg.decision, { reason: comment }); if (e) failure = e; return e }, dlg.decision === 'approve' ? 'سُجّل الاعتماد' : 'رُفض العقد وأُعيد إلى مسودة')
+    const ok = run((d) => { const e = dlg.t.subjectType === 'Amendment' ? decideAmendment(d, d.approvalRequests.find((r) => r.id === dlg.t.requestId)!.subjectId, dlg.decision === 'approve' ? 'Approved' : 'Rejected', comment) : perform(d, dlg.t.contractId, dlg.decision, { reason: comment }); if (e) failure = e; return e }, dlg.decision === 'approve' ? 'سُجّل الاعتماد' : 'رُفض الطلب')
     if (!ok) return setErr(failure)
     setDlg(null)
   }
