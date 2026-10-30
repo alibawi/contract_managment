@@ -42,6 +42,70 @@ export type SettingValue = string | number | boolean
 
 export interface Notice { id: string; at: string; text: string; tone: 'info' | 'warn' | 'danger'; seen: boolean }
 
+// ───────────── Module 1: contracts ─────────────
+export type ContractStatus =
+  | 'Draft' | 'PendingApproval' | 'Approved' | 'PendingSignature' | 'Active' | 'OnHold' | 'Expired' | 'Terminated' | 'Cancelled' | 'Closed'
+export type ContractProfile = 'General' | 'Agreement' | 'Service'
+export type Direction = 'Outgoing' | 'Incoming' | 'Internal'
+export type Confidentiality = 'Normal' | 'Confidential' | 'Restricted'
+export type RenewalPolicy = 'None' | 'Manual' | 'Auto'
+export type TypeCategory = 'Sales' | 'Procurement' | 'Service' | 'Legal' | 'Lease' | 'Project' | 'Other'
+export type PartyRole = 'Counterparty' | 'Guarantor' | 'Witness' | 'Subcontractor' | 'Beneficiary' | 'Other'
+export type SignatureMethod = 'Wet' | 'Uploaded' | 'ExternalProvider'
+export type ClosureReason = 'Completed' | 'Renewed' | 'Archived'
+export type LinkType = 'Source' | 'Release' | 'Fulfillment' | 'Invoice' | 'Related'
+
+export interface ContractType {
+  id: string; code: string; prefix: string; name: string; category: TypeCategory; profile: ContractProfile; defaultDirection: Direction
+  requiresSignature: boolean; requiredSignatureRoles: string[]; requiresApproval: boolean
+  renewalPolicyDefault: RenewalPolicy; defaultDurationMonths?: number; noticePeriodDaysDefault?: number
+  renewalGraceDays?: number; reminderDaysDefault?: string
+  /** Nullable overrides of the system settings (null = use the setting). */
+  enforcementMode?: 'None' | 'Warn' | 'Block'; fulfillmentBasis?: 'Order' | 'Delivery' | 'Invoice'; returnsRestoreCommitment?: boolean
+  isOpenEnded: boolean; requiresContractValue: boolean; requiresPaymentTerm: boolean; defaultConfidentiality: Confidentiality
+  allowManualNumber: boolean; isActive: boolean
+}
+
+export interface Contract {
+  id: string; number: string; title: string; typeId: string; profile: ContractProfile; direction: Direction; status: ContractStatus; versionNo: number
+  counterpartyId?: string; counterpartyName?: string; ownerUserId: string; responsibleEmployeeId?: string; organizationId: string
+  projectId?: string; costCenterId?: string; currency: CurrencyCode; exchangeRate?: number; contractValue?: number
+  paymentTermId?: string; deliveryTerms?: string
+  startDate: string; endDate?: string; signatureDate?: string; effectiveDate?: string; terminationDate?: string
+  renewalPolicy: RenewalPolicy; noticePeriodDays?: number; autoRenewTermMonths?: number; reminderDaysOverride?: string
+  confidentiality: Confidentiality; language: 'ar'; externalReference?: string
+  parentContractId?: string; renewedFromContractId?: string
+  agreementMode?: 'Specific' | 'General'; overridesPrices: boolean
+  closureReason?: ClosureReason; activatedOn?: string; activatedBy?: string
+  description: string; internalNotes: string; createdBy: string; createdAt: string
+}
+
+export interface ContractParty {
+  id: string; contractId: string; role: PartyRole; partnerId?: string; name: string; contactName: string; email: string; phone: string
+  signatoryTitle: string; isPrimary: boolean
+}
+export interface ContractSignature {
+  id: string; contractId: string; partyId?: string; role: string; signerName: string; signerTitle: string; signedOn: string
+  method: SignatureMethod; attachmentId?: string; externalSignatureId?: string
+}
+export interface StatusHistory {
+  id: string; contractId: string; from?: ContractStatus; to: ContractStatus; byUserId: string; at: string; reason?: string
+}
+export interface DocumentLink { id: string; contractId: string; linkType: LinkType; docType: string; docId: string; docRef: string; docDate: string }
+
+/** Agreement/Service commitment line (full engine in module 3). */
+export interface ContractLine {
+  id: string; contractId: string; lineNum: number; itemId?: string; categoryId?: string; includeSubcategories?: boolean; description: string; uomId?: string
+  commitmentType: 'Quantity' | 'Value'; agreedQuantity?: number; agreedValue?: number; unitPrice: number; discountPercent: number
+  priceFixed: boolean; enforceMax: boolean; minRelease?: number; maxRelease?: number; validFrom?: string; validTo?: string
+  status: 'Open' | 'Closed'; notes: string
+}
+
+export interface ContractAttachmentRow {
+  id: string; ownerType: 'contract'; ownerId: string; subType: 'Draft' | 'Signed' | 'Appendix' | 'Other'
+  fileName: string; size: number; contentType: string; uploadedBy: string; uploadedAt: string; version: number
+}
+
 export interface DB {
   /** Current role and user (role switcher). */
   role: RoleId
@@ -66,4 +130,16 @@ export interface DB {
   projects: Project[]
   audit: AuditRow[]
   notices: Notice[]
+  contractTypes: ContractType[]
+  contracts: Contract[]
+  parties: ContractParty[]
+  signatures: ContractSignature[]
+  history: StatusHistory[]
+  links: DocumentLink[]
+  lines: ContractLine[]
+  attachments: ContractAttachmentRow[]
+  /** Alert keys the current user marked as read. */
+  alertsSeen: string[]
+  /** Per-type sequence counters for contract numbers. */
+  numbering: Record<string, number>
 }

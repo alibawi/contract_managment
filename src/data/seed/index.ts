@@ -2,10 +2,12 @@ import { DEFAULT_TODAY } from '../asof'
 import { defaultRolePerms } from '../permissions'
 import { defaultSettings } from '../settings'
 import type { DB } from '../types'
+import { contractTypes, contractsSeed } from './contracts'
 import * as s from './shared'
 
 /** Fresh demo database. Module seeds (contracts, agreements, ...) are merged here by each module step. */
 export function seed(): DB {
+  const cs = contractsSeed()
   return {
     role: 'admin',
     userId: 'u-adm',
@@ -27,5 +29,15 @@ export function seed(): DB {
     projects: s.projects,
     audit: [],
     notices: [],
+    contractTypes,
+    contracts: cs.contracts,
+    parties: cs.parties,
+    signatures: cs.signatures,
+    history: cs.history,
+    links: cs.links,
+    lines: cs.lines,
+    attachments: cs.attachments,
+    alertsSeen: [],
+    numbering: cs.numbering,
   }
 }

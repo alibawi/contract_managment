@@ -1,13 +1,14 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { setToday } from './asof'
 import { nowStamp, uid } from './format'
+import { syncTime } from './lifecycle'
 import { can as canRole } from './permissions'
 import { seed } from './seed'
 import type { AppUser, DB, Perm, RoleId } from './types'
 
 const KEY = 'enki-contracts-mock'
 /** Bump whenever the data model or seed changes — stored data with another version is discarded and reseeded. */
-export const DATA_VERSION = 1
+export const DATA_VERSION = 3
 
 type Toast = { msg: string; tone: 'ok' | 'err' }
 
@@ -102,7 +103,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }),
     [run],
   )
-  const setAsOf = useCallback((date: string) => run((d) => { d.asOf = date; addAudit(d, 'demo', 'asOf', 'تغيير التاريخ التجريبي', date) }, `التاريخ التجريبي: ${date}`), [run])
+  const setAsOf = useCallback((date: string) => run((d) => {
+      d.asOf = date
+      addAudit(d, 'demo', 'asOf', 'تغيير التاريخ التجريبي', date)
+      const n = syncTime(d)
+      if (n) addAudit(d, 'demo', 'expiry', `انتهاء ${n} عقد/عقود تلقائياً`, date)
+    }, `التاريخ التجريبي: ${date}`), [run])
 
   return (
     <StoreCtx.Provider value={{ db, version, run, reset, toast, can, user, setRole, setAsOf }}>
