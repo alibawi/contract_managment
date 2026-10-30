@@ -3,15 +3,16 @@ import { today } from './asof'
 import { daysTo, fmtDate } from './format'
 import { graceEnd, noticeDeadline, typeOf } from './lifecycle'
 import { escalationDays, escalationLabel, isOpen, effStatus } from './obligations'
+import { consumed, fmtStamp, levelOf } from './service'
 import { daysSetting } from './settings'
 import type { Contract, DB } from './types'
 
-export type AlertRule = 'Expiry' | 'NoticeDeadline' | 'Expired' | 'ApprovalPending' | 'SignatureMissing' | 'Exceeded' | 'ObligationDue' | 'GuaranteeExpiry'
+export type AlertRule = 'Expiry' | 'NoticeDeadline' | 'Expired' | 'ApprovalPending' | 'SignatureMissing' | 'Exceeded' | 'ObligationDue' | 'GuaranteeExpiry' | 'SlaBreach' | 'ServiceLimit'
 export interface Alert {
   key: string; contractId: string; contractNumber: string; rule: AlertRule; severity: 'info' | 'warn' | 'danger'; text: string; dueDate?: string; recipient: 'owner+managers'
 }
 export const ruleLabel: Record<AlertRule, string> = {
-  Expiry: 'قرب الانتهاء', NoticeDeadline: 'مهلة الإشعار', Expired: 'عقد منتهٍ', ApprovalPending: 'اعتماد معلّق', SignatureMissing: 'توقيع ناقص', Exceeded: 'تجاوز الالتزام', ObligationDue: 'استحقاق التزام', GuaranteeExpiry: 'انتهاء ضمان',
+  Expiry: 'قرب الانتهاء', NoticeDeadline: 'مهلة الإشعار', Expired: 'عقد منتهٍ', ApprovalPending: 'اعتماد معلّق', SignatureMissing: 'توقيع ناقص', Exceeded: 'تجاوز الالتزام', ObligationDue: 'استحقاق التزام', GuaranteeExpiry: 'انتهاء ضمان', SlaBreach: 'خرق مستوى الخدمة', ServiceLimit: 'تجاوز الساعات المشمولة',
 }
 
 const thresholds = (db: DB, c: Contract, which: 'expiry' | 'notice') => {
@@ -68,6 +69,15 @@ export function computeAlerts(db: DB): Alert[] {
     const left = daysTo(g.expiryDate)
     const hit = [30, 7].filter((t) => left >= 0 && left <= t).sort((a, b) => a - b)[0]
     if (c && hit !== undefined) push(c, 'GuaranteeExpiry', left <= 7 ? 'danger' : 'warn', `ضمان ${g.issuer} ينتهي خلال ${left} يوماً (${fmtDate(g.expiryDate)})`, g.expiryDate, `|${g.id}|${hit}`)
+  })
+  // BR-S-06: SLA breaches of the last 30 days (one alert per call); BR-S-04: included hours/visits exceeded
+  db.slaEvents.filter((e) => e.kind.endsWith('Breached') && daysTo(today(), e.at.slice(0, 10)) <= 30).forEach((e) => {
+    const c = db.contracts.find((x) => x.id === e.contractId), call = db.serviceCalls.find((x) => x.id === e.callId)
+    if (c && call) push(c, 'SlaBreach', 'danger', `البلاغ ${call.no}: ${e.kind === 'ResponseBreached' ? 'تجاوز مهلة الاستجابة' : 'تجاوز مهلة الحل'} (${fmtStamp(e.at)})`, e.at.slice(0, 10), `|${call.id}|${e.kind}`)
+  })
+  db.contracts.filter((c) => c.profile === 'Service' && ['Active', 'OnHold'].includes(c.status)).forEach((c) => {
+    const l = levelOf(db, c.id), u = consumed(db, c.id)
+    if (l && ((l.includedHours !== undefined && u.hours > l.includedHours) || (l.includedVisits !== undefined && u.visits > l.includedVisits))) push(c, 'ServiceLimit', 'warn', `تجاوز الساعات/الزيارات المشمولة (${u.hours} س، ${u.visits} زيارة) — البلاغات القادمة قابلة للفوترة`)
   })
   const sev = { danger: 0, warn: 1, info: 2 }
   return out.sort((a, b) => sev[a.severity] - sev[b.severity] || (a.dueDate ?? '').localeCompare(b.dueDate ?? ''))

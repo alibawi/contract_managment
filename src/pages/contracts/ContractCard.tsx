@@ -20,7 +20,8 @@ import { RenewButton } from '../amendments/Renewals'
 import { FinancialTab } from '../finance/FinancialTab'
 import { ObligationsTab } from '../finance/ObligationsTab'
 import { TermsTab } from '../templates/TermsTab'
-import { AttachmentsTab, GeneralTab, LinksTab, LinesTab, PartiesTab, SignaturesTab, SoonTab, TimelineTab } from './tabs'
+import { ServiceTab } from '../service/ServiceTab'
+import { AttachmentsTab, GeneralTab, LinksTab, LinesTab, PartiesTab, SignaturesTab, TimelineTab } from './tabs'
 
 type Tab = 'general' | 'parties' | 'lines' | 'terms' | 'attachments' | 'signatures' | 'approvals' | 'amendments' | 'versions' | 'fulfillment' | 'links' | 'obligations' | 'financial' | 'service' | 'timeline'
 
@@ -74,7 +75,7 @@ export default function ContractCard() {
             case 'fulfillment': return <FulfillmentTab c={c} />
             case 'obligations': return <ObligationsTab c={c} />
             case 'financial': return <FinancialTab c={c} />
-            case 'service': return <SoonTab title="الخدمة ومستوى الخدمة" module="عقود الخدمة" />
+            case 'service': return <ServiceTab c={c} />
           }
         })()
         return (

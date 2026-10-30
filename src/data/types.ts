@@ -242,6 +242,24 @@ export interface ContractTerm {
 }
 export interface PrintLogEntry { id: string; contractId: string; at: string; byUserId: string; draft: boolean }
 
+// ───────────── Module 7: service contracts (coverage, SLA, service-call simulator) ─────────────
+export interface ServiceLevel {
+  id: string; contractId: string; responseHours: number; resolutionHours: number; includedHours?: number; includedVisits?: number
+  warrantyStart?: string; warrantyEnd?: string; limits: string
+}
+export interface CoverageWindow { id: string; contractId: string; dayOfWeek: number; fromTime: string; toTime: string }
+export interface CoverageExclusion { id: string; contractId: string; date: string; reason: string }
+export interface CoveredItem { id: string; contractId: string; itemId?: string; serial?: string; assetRef?: string; description: string; warrantyStart?: string; warrantyEnd?: string }
+export type CallStatus = 'Open' | 'Responded' | 'Resolved' | 'Closed'
+export interface ServiceCall {
+  id: string; no: string; customerId: string; itemId?: string; serial?: string; description: string; severity: 'Critical' | 'Normal'
+  /** Local date-time (YYYY-MM-DDTHH:mm). */
+  openedAt: string; status: CallStatus; respondedAt?: string; resolvedAt?: string; closedAt?: string
+  contractId?: string; hoursConsumed: number; visits: number; outsideCoverage: boolean; billable: boolean; responseDue?: string; resolutionDue?: string; note: string
+}
+export interface ServiceConsumption { id: string; contractId: string; callId: string; hours: number; visits: number; date: string }
+export interface SlaEvent { id: string; callId: string; contractId: string; kind: 'ResponseMet' | 'ResponseBreached' | 'ResolutionMet' | 'ResolutionBreached'; at: string }
+
 export interface DB {
   /** Current role and user (role switcher). */
   role: RoleId
@@ -301,4 +319,11 @@ export interface DB {
   templateVersions: TemplateVersion[]
   terms: ContractTerm[]
   printLog: PrintLogEntry[]
+  serviceLevels: ServiceLevel[]
+  coverageWindows: CoverageWindow[]
+  coverageExclusions: CoverageExclusion[]
+  coveredItems: CoveredItem[]
+  serviceCalls: ServiceCall[]
+  consumption: ServiceConsumption[]
+  slaEvents: SlaEvent[]
 }

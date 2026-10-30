@@ -7,6 +7,7 @@ import * as s from './shared'
 import { agreementsSeed } from './agreements'
 import { amendmentsSeed } from './amendments'
 import { financeSeed } from './finance'
+import { serviceSeed } from './service'
 import { templatesSeed } from './templates'
 import { workflowSeed } from './workflow'
 
@@ -67,11 +68,19 @@ export function seed(): DB {
     templateVersions: [],
     terms: [],
     printLog: [],
+    serviceLevels: [],
+    coverageWindows: [],
+    coverageExclusions: [],
+    coveredItems: [],
+    serviceCalls: [],
+    consumption: [],
+    slaEvents: [],
   }
   workflowSeed(db)
   agreementsSeed(db)
   templatesSeed(db)
   amendmentsSeed(db)
   financeSeed(db)
+  serviceSeed(db)
   return db
 }

@@ -19,6 +19,9 @@ import Clauses from './pages/templates/Clauses'
 import Print from './pages/templates/Print'
 import TemplateEditor from './pages/templates/TemplateEditor'
 import Templates from './pages/templates/Templates'
+import Calls from './pages/service/Calls'
+import ServiceList from './pages/service/ServiceList'
+import SlaReport from './pages/service/SlaReport'
 import Health from './pages/Health'
 import Delegations from './pages/workflow/Delegations'
 import ApprovalStages from './pages/workflow/ApprovalStages'
@@ -56,6 +59,9 @@ export default function App() {
         <Route path="/templates/:id" element={<TemplateEditor key={pathname} />} />
         <Route path="/clauses" element={<Clauses />} />
         <Route path="/contracts/:id/print" element={<Print />} />
+        <Route path="/service" element={<ServiceList />} />
+        <Route path="/service/calls" element={<Calls />} />
+        <Route path="/service/sla" element={<SlaReport />} />
         <Route path="/health" element={<Health />} />
         <Route path="*" element={<Home />} />
       </Routes>

@@ -190,3 +190,24 @@
 **Verification (actual):** `tsc -b` clean, `npm run build` ok, `npm run check` → integrity OK. `npm run check:templates` (same engine): clause v2 → template v+1 with older versions unchanged and existing contract terms unchanged, new contract from the new version carries the new text and defaults, Draft-only toggles/free clause/reorder and freeze after Draft, archived template hidden and unpublishable, unknown placeholder and empty template refused, placeholders resolved from current contract values, Draft watermark flag and print count, terms in the version payload and diff — all pass. Browser: templates list (8 rows, KPIs), template editor, print preview of c-01 (resolved text, lines table, v2 values) and of draft c-07 (watermark present), terms tab, wizard template picker present.
 
 **Next step:** owner review, then module 7 «service».
+
+## 2026-10-30 — Module 7: service (7.1–7.7)
+
+**Module / screen:** service — contracts list S6 (with KPIs), service tab S1/S2/S3 on the card, service-call simulator S4, SLA report S5.
+
+**Completed**
+- `service.ts`: coverage lookup by customer / item / serial on the call date with reasons when not covered (BR-S-01, warranty dates BR-S-05); weekly coverage windows and exclusion dates (BR-S-02); response and resolution deadlines counted in coverage hours only, skipping closed hours, weekends and exclusion dates (BR-S-03); consumption deducted from included hours/visits, exceeding marks the call billable and raises an alert (BR-S-04); SLA events on respond/resolve and a breach sweep when the demo date moves, one event per call and kind (BR-S-06); SLA state Within / NearBreach (≥80% of the target elapsed) / Breached and a countdown in coverage time.
+- Seed: 5 service contracts with levels and windows (Sun–Thu, Friday half day for the hospital), 2 exclusion dates, 9 covered items (one warranty ending in 51 days), 20 calls driven through the engine (inside/outside coverage, breaches, open and resolved, 2 not covered). `npm run check` also verifies service data.
+- Screens: list with utilisation bars and 5 KPIs; service tab (targets, consumption bars, weekly grid, exclusions, covered items with bulk add from the customer's delivered items, latest calls) editable only while the contract is Draft; simulator with live coverage lookup and deadlines, outside-hours warning, respond/resolve/close with explicit timestamps; SLA report by contract and customer with a six-month trend.
+- Alerts: «خرق مستوى الخدمة» (last 30 days, one per call) and «تجاوز الساعات المشمولة».
+
+**Key design decisions**
+- The demo clock is the demo date at 12:00; the simulator takes explicit timestamps so any case can be reproduced.
+- A call with no covering contract is still opened, marked not covered and billable.
+- Service terms follow BR-S-07: frozen after Draft; the amendment editor does not yet cover service terms.
+
+**Issues / deferred:** equipment cards, real service calls and SLA measurement belong to the Assets/Maintenance modules (shown as «قريباً» in the simulator banner); amendments of service levels/coverage are not built.
+
+**Verification (actual):** `tsc -b` clean, `npm run build` ok, `npm run check` → integrity OK. `npm run check:service` (same engine): coverage by serial, unknown serial and expired contract not covered with reasons, warranty boundary day, deadlines across the Friday half day / Saturday / Sunday and over an exclusion date, coverage minutes, outside-hours flag (Saturday and 07:00) without blocking, Within vs NearBreach at 75% and 87%, breach sweep once, late and on-time response events, breach alert, respond-before-open refused, exceeding included hours marks the call billable and raises the alert — all pass. Browser: service list (3 active, 82% within SLA, 5 breaches this month, hours 65.5/120, 1 warranty expiring), simulator (coverage result with deadlines, calls table with countdowns), SLA report with per-contract rows and trend.
+
+**Next step:** owner review, then module 8 «settings-access».

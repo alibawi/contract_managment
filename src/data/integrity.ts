@@ -26,7 +26,7 @@ export function checkFoundation(db: DB): string[] {
   if (!db.users.some((u) => u.id === db.userId && u.role === db.role)) errs.push('current user does not match current role')
   const roles = new Set(db.users.map((u) => u.role))
   Object.keys(db.rolePerms).forEach((r) => { if (!roles.has(r as never)) errs.push(`no user has role ${r}`) })
-  errs.push(...checkContracts(db), ...checkWorkflow(db), ...checkAgreements(db), ...checkAmendments(db), ...checkFinance(db), ...checkTemplates(db))
+  errs.push(...checkContracts(db), ...checkWorkflow(db), ...checkAgreements(db), ...checkAmendments(db), ...checkFinance(db), ...checkTemplates(db), ...checkService(db))
   return errs
 }
 
@@ -232,6 +232,31 @@ export function checkTemplates(db: DB): string[] {
     if (!db.contracts.some((c) => c.id === t.contractId)) errs.push(`term ${t.id}: unknown contract`)
     if (t.clauseVersionId && !cvs.has(t.clauseVersionId)) errs.push(`term ${t.id}: unknown clause version`)
     if (t.clauseVersionId && db.clauseVersions.find((v) => v.id === t.clauseVersionId)!.body !== t.body) errs.push(`term ${t.id}: body differs from its clause version (not a frozen copy)`)
+  })
+  return errs
+}
+
+/** Module 7: levels/windows/items reference service contracts, calls are consistent with their contract and timestamps, consumption matches resolved calls. */
+export function checkService(db: DB): string[] {
+  const errs: string[] = []
+  const svc = new Map(db.contracts.filter((c) => c.profile === 'Service').map((c) => [c.id, c]))
+  db.serviceLevels.forEach((l) => { if (!svc.has(l.contractId)) errs.push(`service level ${l.id}: not a service contract`) })
+  if (new Set(db.serviceLevels.map((l) => l.contractId)).size !== db.serviceLevels.length) errs.push('service levels: more than one per contract')
+  db.coverageWindows.forEach((w) => { if (!svc.has(w.contractId) || w.toTime <= w.fromTime || w.dayOfWeek < 0 || w.dayOfWeek > 6) errs.push(`coverage window ${w.id}: invalid`) })
+  db.coveredItems.forEach((i) => { if (!svc.has(i.contractId)) errs.push(`covered item ${i.id}: not a service contract`); if (i.warrantyStart && i.warrantyEnd && i.warrantyEnd < i.warrantyStart) errs.push(`covered item ${i.id}: warranty dates reversed`) })
+  db.serviceCalls.forEach((c) => {
+    if (c.contractId && !svc.has(c.contractId)) errs.push(`call ${c.no}: unknown contract`)
+    if (c.respondedAt && c.respondedAt < c.openedAt) errs.push(`call ${c.no}: responded before opening`)
+    if (c.resolvedAt && c.resolvedAt < (c.respondedAt ?? c.openedAt)) errs.push(`call ${c.no}: resolved before responding`)
+    if (['Resolved', 'Closed'].includes(c.status) && !c.resolvedAt) errs.push(`call ${c.no}: ${c.status} without resolution time`)
+    if (c.contractId && c.resolvedAt && !db.consumption.some((x) => x.callId === c.id)) errs.push(`call ${c.no}: resolved without consumption`)
+  })
+  db.consumption.forEach((x) => { if (!db.serviceCalls.some((c) => c.id === x.callId)) errs.push(`consumption ${x.id}: unknown call`) })
+  const seen = new Set<string>()
+  db.slaEvents.forEach((e) => {
+    const k = `${e.callId}|${e.kind.startsWith('Response') ? 'R' : 'S'}`
+    if (seen.has(k)) errs.push(`sla event ${e.id}: duplicate ${k}`)
+    seen.add(k)
   })
   return errs
 }
