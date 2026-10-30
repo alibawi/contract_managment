@@ -12,7 +12,8 @@
     "check:amendments": "esbuild scripts/flow-amendments.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/flowa.mjs --log-level=warning && node node_modules/.cache/flowa.mjs",
     "check:finance": "esbuild scripts/flow-finance.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/flowf.mjs --log-level=warning && node node_modules/.cache/flowf.mjs",
     "check:templates": "esbuild scripts/flow-templates.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/flowt.mjs --log-level=warning && node node_modules/.cache/flowt.mjs",
-    "check:service": "esbuild scripts/flow-service.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/flows.mjs --log-level=warning && node node_modules/.cache/flows.mjs"
+    "check:service": "esbuild scripts/flow-service.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/flows.mjs --log-level=warning && node node_modules/.cache/flows.mjs",
+    "check:settings": "esbuild scripts/flow-settings.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/flowx.mjs --log-level=warning && node node_modules/.cache/flowx.mjs"
   },
   "dependencies": {
     "lucide-react": "0.460.0",

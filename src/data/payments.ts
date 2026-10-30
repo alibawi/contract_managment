@@ -1,4 +1,5 @@
 // Payment schedule, mock billing automation and the financial summary (spec BR-O-06…10). Contracts never post accounting entries.
+import { featureOn } from './admin'
 import { today } from './asof'
 import { convertAmount } from './currency'
 import { uid } from './format'
@@ -67,6 +68,7 @@ export function deleteItem(d: DB, id: string): string | null {
 export function billingBlocker(d: DB, it: PaymentItem): string | undefined {
   const c = d.contracts.find((x) => x.id === it.contractId)
   if (!c) return 'العقد غير موجود'
+  if (!featureOn(d, 'RecurringBilling')) return 'الفوترة التلقائية معطّلة من إعدادات النظام'
   if (effItemStatus(it) !== 'Due') return it.status === 'Planned' ? `يستحق في ${it.dueDate}` : 'تمت فوترته'
   if (!['Active', 'OnHold'].includes(c.status)) return 'العقد غير ساري'
   if (!it.billingDocType) return 'حدّد نوع مستند الفوترة'

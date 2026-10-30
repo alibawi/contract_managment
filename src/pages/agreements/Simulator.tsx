@@ -13,6 +13,7 @@ import {
   agreementCfg, balanceOf, baseTypes, counterLabel, counterUnits, createReturn, docMeta, docTypesFor, editDoc, findLine, isReturn, lineMatchesItem, netPrice,
   postDoc, previewPost, remaining, setDocState, signsOf, type DocSpec, type Issue, type Outcome,
 } from '../../data/fulfillment'
+import { changeSetting } from '../../data/admin'
 import { settingDefs } from '../../data/settings'
 import { useStore } from '../../data/store'
 import type { Contract, CurrencyCode, DocType, MockDoc, SettingKey } from '../../data/types'
@@ -95,7 +96,7 @@ export default function Simulator() {
           {d.state === 'Active' && <button type="button" title="حذف" className="rounded p-1 hover:bg-red-50 hover:text-red-600" onClick={() => act(`حُذف ${d.ref}`, (x) => setDocState(x, d.id, 'Deleted'))}><Ban className="h-4 w-4" /></button>}
         </div>) }] : []),
   ]
-  const setSetting = (key: SettingKey, v: string | boolean) => run((d) => { d.settings[key] = v }, 'تغيّر الإعداد (يسري فوراً على المحاكاة)')
+  const setSetting = (key: SettingKey, v: string | boolean) => run((d) => changeSetting(d, key, v), 'تغيّر الإعداد (يسري فوراً على المحاكاة)')
 
   return (
     <div>

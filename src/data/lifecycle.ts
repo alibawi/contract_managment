@@ -34,10 +34,17 @@ export const graceDays = (db: DB, c: Contract) => typeOf(db, c).renewalGraceDays
 export const graceEnd = (db: DB, c: Contract) => (c.endDate ? addDays(c.endDate, graceDays(db, c)) : undefined)
 
 /** BR-C-12: confidential items are hidden from roles without ViewConfidential (owners keep access). */
-export function canSee(db: DB, c: Contract): boolean {
+export function canSeeAs(db: DB, userId: string, c: Contract): boolean {
+  const u = db.users.find((x) => x.id === userId)
+  if (!u) return false
+  // BR-X-03 data authority: User = own contracts, Org = own organization, System = everything
+  const scope = db.userScopes?.[userId] ?? 'System'
+  if (scope === 'Org' && c.organizationId !== u.orgId && c.ownerUserId !== userId) return false
+  if (scope === 'User' && c.ownerUserId !== userId && c.createdBy !== userId) return false
   if (c.confidentiality === 'Normal') return true
-  return canRole(db.rolePerms, db.role, 'Contracts.ViewConfidential') || c.ownerUserId === db.userId || db.role === 'admin'
+  return canRole(db.rolePerms, u.role, 'Contracts.ViewConfidential') || c.ownerUserId === userId || u.role === 'admin'
 }
+export const canSee = (db: DB, c: Contract): boolean => canSeeAs(db, db.userId, c)
 
 /** Signature roles still missing for activation (BR-C-06). */
 export function missingSignatureRoles(db: DB, c: Contract): string[] {
@@ -252,5 +259,5 @@ export function syncTime(d: DB): number {
 export function nextNumber(d: DB, typeId: string, startDate: string): string {
   const t = d.contractTypes.find((x) => x.id === typeId)!
   d.numbering[t.prefix] = (d.numbering[t.prefix] ?? 0) + 1
-  return `CTR-${t.prefix}-${startDate.slice(0, 4)}-${String(d.numbering[t.prefix]).padStart(6, '0')}`
+  return `CTR-${t.prefix}-${startDate.slice(0, 4)}-${String(d.numbering[t.prefix]).padStart(t.numberSize ?? 6, '0')}`
 }

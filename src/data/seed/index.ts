@@ -75,6 +75,7 @@ export function seed(): DB {
     serviceCalls: [],
     consumption: [],
     slaEvents: [],
+    userScopes: { 'u-req': 'Org', 'u-sal': 'Org', 'u-pro': 'Org', 'u-bsr': 'Org', 'u-app': 'System', 'u-mgr': 'System', 'u-leg': 'System', 'u-fin': 'System', 'u-adm': 'System', 'u-fd': 'System', 'u-gm': 'System' },
   }
   workflowSeed(db)
   agreementsSeed(db)

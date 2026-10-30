@@ -22,6 +22,12 @@ import Templates from './pages/templates/Templates'
 import Calls from './pages/service/Calls'
 import ServiceList from './pages/service/ServiceList'
 import SlaReport from './pages/service/SlaReport'
+import SettingsAudit from './pages/settings/Audit'
+import Demo from './pages/settings/Demo'
+import Matrix from './pages/settings/Matrix'
+import Numbering from './pages/settings/Numbering'
+import Organizations from './pages/settings/Organizations'
+import Settings from './pages/settings/Settings'
 import Health from './pages/Health'
 import Delegations from './pages/workflow/Delegations'
 import ApprovalStages from './pages/workflow/ApprovalStages'
@@ -62,6 +68,12 @@ export default function App() {
         <Route path="/service" element={<ServiceList />} />
         <Route path="/service/calls" element={<Calls />} />
         <Route path="/service/sla" element={<SlaReport />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/settings/permissions" element={<Matrix />} />
+        <Route path="/settings/numbering" element={<Numbering />} />
+        <Route path="/settings/organizations" element={<Organizations />} />
+        <Route path="/settings/audit" element={<SettingsAudit />} />
+        <Route path="/settings/demo" element={<Demo />} />
         <Route path="/health" element={<Health />} />
         <Route path="*" element={<Home />} />
       </Routes>

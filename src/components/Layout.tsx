@@ -6,6 +6,7 @@ import {
 import { useState, type ReactNode } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { addDays, today } from '../data/asof'
+import { featureOn } from '../data/admin'
 import { fmtDate } from '../data/format'
 import { roleLabel } from '../data/permissions'
 import { DATA_VERSION, useStore } from '../data/store'
@@ -21,11 +22,11 @@ const otherModules: [string, LucideIcon][] = [
 ]
 
 function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
-  const { toast, can } = useStore()
+  const { toast, can, db } = useStore()
   const [open, setOpen] = useState(true)
   const outOfScope = () => toast('هذه الوحدة خارج نطاق النموذج التجريبي')
   const item = 'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] text-gray-700 hover:bg-gray-100'
-  const nav = contractNav.filter((n) => n.module !== 'analytics' || can('Reports.View'))
+  const nav = contractNav.filter((n) => (n.module !== 'analytics' || can('Reports.View')) && (!n.feature || featureOn(db, n.feature)) && (n.module !== 'settings-access' || n.to === '/settings/approval-stages' || can('Settings.Manage')))
 
   return (
     <aside className={`flex shrink-0 flex-col border-s border-line bg-white transition-all ${collapsed ? 'w-[60px]' : 'w-[240px]'}`}>

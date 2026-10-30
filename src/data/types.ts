@@ -12,6 +12,8 @@ export type Perm =
   | 'Reports.View' | 'Settings.Manage'
 
 export type CurrencyCode = 'IQD' | 'USD'
+/** BR-X-03: how much of the data a user may see. */
+export type DataAuthority = 'User' | 'Org' | 'System'
 
 export interface Organization { id: string; code: string; name: string; city: string }
 export interface AppUser { id: string; name: string; title: string; role: RoleId; orgId: string; employeeId?: string }
@@ -64,6 +66,8 @@ export interface ContractType {
   enforcementMode?: 'None' | 'Warn' | 'Block'; fulfillmentBasis?: 'Order' | 'Delivery' | 'Invoice'; returnsRestoreCommitment?: boolean
   isOpenEnded: boolean; requiresContractValue: boolean; requiresPaymentTerm: boolean; defaultConfidentiality: Confidentiality
   allowManualNumber: boolean; isActive: boolean
+  /** Digits of the serial part of the contract number (default 6). */
+  numberSize?: number
 }
 
 export interface Contract {
@@ -326,4 +330,5 @@ export interface DB {
   serviceCalls: ServiceCall[]
   consumption: ServiceConsumption[]
   slaEvents: SlaEvent[]
+  userScopes: Record<string, DataAuthority>
 }

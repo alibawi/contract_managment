@@ -211,3 +211,25 @@
 **Verification (actual):** `tsc -b` clean, `npm run build` ok, `npm run check` → integrity OK. `npm run check:service` (same engine): coverage by serial, unknown serial and expired contract not covered with reasons, warranty boundary day, deadlines across the Friday half day / Saturday / Sunday and over an exclusion date, coverage minutes, outside-hours flag (Saturday and 07:00) without blocking, Within vs NearBreach at 75% and 87%, breach sweep once, late and on-time response events, breach alert, respond-before-open refused, exceeding included hours marks the call billable and raises the alert — all pass. Browser: service list (3 active, 82% within SLA, 5 breaches this month, hours 65.5/120, 1 warranty expiring), simulator (coverage result with deadlines, calls table with countdowns), SLA report with per-contract rows and trend.
 
 **Next step:** owner review, then module 8 «settings-access».
+
+## 2026-10-30 — Module 8: settings-access (8.1–8.6)
+
+**Module / screen:** settings-access — system settings X1 (with KPIs), permission matrix X2, numbering X3, approval stages editor X4, organizations and data authority with a «view as» panel X5, settings audit X6, demo controls X7.
+
+**Completed**
+- `admin.ts`: `changeSetting` (validated, audit row with old ← new, no row when unchanged, effective on later actions only — BR-X-01/07), `resetSettings`, `setRolePerm` / `resetMatrix` (admin column locked), numbering `updateSeries` (prefix, next number, digits; next number must exceed the highest used; duplicate prefix refused; existing numbers never renumbered — BR-X-04), stage-rule save/delete with overlap validation (pending requests keep their snapshot — BR-X-06), `setUserScope`.
+- Data authority (BR-X-03): `canSeeAs` — User / Org / System scope plus the confidentiality rule; seeded scopes: requester, sales, procurement and the Basra requester at Org, everyone else System. `canSee` now uses it, so lists, cards and links respect it.
+- Feature flags (BR-X-05): Obligations, Templates and Service hide their sidebar items; RecurringBilling off blocks «إنشاء فوترة»; E-signature already hid its panel. Settings screens are hidden from the menu without «إدارة الإعدادات» (stage table stays visible to managers, read-only).
+- Simulator quick settings now go through `changeSetting`, so they are audited too.
+- Screens: settings grouped with description, default marker, per-row/group/all reset; matrix with totals; numbering with live example; stage editor (name, subject, value range, type/org scope, stages with approver, legal-review flag, reorder); organizations table with scope selector and «view as» test; audit with filter; demo controls (date steps, reset, error simulation).
+
+**Key design decisions**
+- Org scope lets a user also see contracts they own outside their organization.
+- Stage rules cannot be deleted while a pending request uses them (disable instead).
+- Elsa designer button is present but disabled (real system only).
+
+**Issues / deferred:** the matrix does not restrict data beyond what the engines already check; there is no per-organization numbering year reset.
+
+**Verification (actual):** `tsc -b` clean, `npm run build` ok, `npm run check` → integrity OK. `npm run check:settings` (same engine): Warn / Block+Rollback / Block+KeepAndAlert / None replayed on the same simulator case, currency source flips the rate (1310 vs 1400), recorded ledger and balances untouched by a setting flip, restore-off return adds no entries, audit rows with old and new, invalid values refused, defaults restored, matrix toggles change `can()`, admin locked, numbering rules (below-used refused, new series applies to new contracts only, duplicate prefix refused), stage rule edit applies to new submissions while the pending snapshot is unchanged, overlap and delete-with-pending refused, data authority for Org/User/System, billing automation flag — all pass. Browser: settings KPIs, a setting change marked «معدّل» and logged in the audit page with Warn ← Block, matrix (36 rows, totals), numbering with live examples, organizations view-as (Basra user sees 2 of 31).
+
+**Next step:** owner review, then module 9 «analytics».
