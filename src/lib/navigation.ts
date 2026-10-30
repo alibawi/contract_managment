@@ -11,9 +11,9 @@ export interface NavItem { to: string; label: string; icon: LucideIcon; section?
  */
 export const contractNav: NavItem[] = [
   { to: '/', label: 'لوحة المؤشرات', icon: LayoutDashboard, module: 'foundation' },
-  { to: '/contracts', label: 'العقود', icon: FileText, section: 'العقود', soon: true, module: 'contracts' },
-  { to: '/contract-types', label: 'أنواع العقود', icon: Tags, soon: true, module: 'contracts' },
-  { to: '/alerts', label: 'التنبيهات', icon: BellRing, soon: true, module: 'contracts' },
+  { to: '/contracts', label: 'العقود', icon: FileText, section: 'العقود', module: 'contracts' },
+  { to: '/contract-types', label: 'أنواع العقود', icon: Tags, module: 'contracts' },
+  { to: '/alerts', label: 'التنبيهات', icon: BellRing, module: 'contracts' },
   { to: '/tasks', label: 'مهامي (الاعتماد)', icon: ClipboardCheck, section: 'الاعتماد والتوقيع', soon: true, module: 'workflow' },
   { to: '/delegations', label: 'تفويض الاعتماد', icon: UserCog, soon: true, module: 'workflow' },
   { to: '/agreements', label: 'اتفاقيات المبيعات والمشتريات', icon: Handshake, section: 'الاتفاقيات', soon: true, module: 'agreements' },

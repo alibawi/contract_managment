@@ -52,3 +52,29 @@
 **Next step:** owner checkpoint (playbook §8), then module 1 «contracts».
 
 ---
+
+## 2026-10-30 — Module 1: contracts (1.1–1.9)
+
+**Module / screen:** contracts — list C1, card C2 (core tabs), wizard C3, transition dialogs C6, types C4, alerts C5, linked documents C7, module KPIs on the landing.
+
+**Completed**
+- Seed: 12 contract types, 30 contracts across all 10 statuses (15 agreements, 5 service, 10 general; IQD and USD; Iraqi fictional counterparties), parties, signatures (roles Counterparty/Company), attachments (draft/signed/appendix, metadata only), status history, document links, 38 basic agreement lines (module 3 extends them). `npm run check` now also verifies contracts (history ends at the current status, required signatures present, no duplicate numbers, FKs).
+- `lifecycle.ts`: state machine for T1–T14 (submit/approve/reject, send for signature, activate, suspend/resume, terminate, close, cancel, reopen, delete) with `allowedActions()` driving the UI; `validateSubmit()` (BR-C-02/03/04); signature rules (BR-C-06); locked fields (BR-C-05); version 1 + exchange-rate snapshot at activation (BR-C-07); `syncTime()` expires Active/OnHold past end date and auto-activates signed contracts whose effective date arrived (BR-C-11); numbering `CTR-{prefix}-{year}-{nnnnnn}`; confidentiality filter (BR-C-12).
+- `alerts.ts`: expiry / notice-deadline / expired / approval-pending / signature-missing alerts from settings, type defaults and per-contract overrides (BR-C-14).
+- Screens: list with status tabs + counts, 7 filters, search, sortable columns; card with 15 tab slots (later modules show «قريباً», gated by feature flags); 6-step wizard (type defaults, partner defaults payment term and currency, item prices converted to the contract currency, quick line editor, reminders, attachments, review with validation); contract types screen; alerts center with read marks; KPI dashboard (donut by status, bars by type, expiring list).
+- Role gating: buttons come from `allowedActions()` + `rolePerms`; confidential contracts hidden/forbidden without ViewConfidential; export button hidden without Export.
+
+**Key design decisions**
+- Approval is a single-step stub (module 2 replaces `submit/approve/reject` with the Elsa stage engine). The creator cannot approve their own contract unless the setting allows it.
+- Contract effective date defaults to the start date; activation is blocked until it arrives, and the demo-date job promotes it automatically if signatures are complete (plan T6).
+- `useApi` keeps stale data while refreshing, so action results show up ~one tick after a click (expected).
+- Seed `createdAt` of in-flight contracts is 3–7 days ago so approval/signature reminders look realistic.
+- Wizard editing of non-draft contracts is limited to non-legal fields (owner, notes, reminders, attachments).
+
+**Issues / deferred:** amendments, versions, fulfilment, obligations, templates and service tabs are placeholders by design; `Contracts.Edit` is used for signature recording (plan doc 07). The console shows old `ERR_CONNECTION_REFUSED` lines from the dev server being stopped between sessions — not application errors.
+
+**Verification (actual):** `tsc -b` clean, `npm run build` ok, `npm run check` → integrity OK. Browser, role admin: dashboard KPIs (14 active, 1 expiring in 30 days, 9 alerts); list shows 30 rows with correct tab counts; c-15 draft → submit → approve → activation blocked with «تواقيع ناقصة» → one signature via dialog → remaining signature + signed attachment injected → activation created version 1, effective date and history Draft>PendingApproval>Approved>Active; +90 demo days moved 7 contracts to Expired (system history rows) while OnHold ones stayed; wizard validation (type/title, partner required, contract value) and full create + «حفظ وإرسال للاعتماد» produced CTR-PA-2026-000007 with USD price 11.07 converted from 14,500 IQD, payment term defaulted from partner; role «مبيعات»: list 31→28 (confidential hidden), direct link to a confidential contract shows the forbidden message, export hidden; types screen 12 rows, create button only for admin, dialog opens.
+
+**Next step:** owner review checklist, then module 2 «workflow».
+
+---
