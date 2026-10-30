@@ -140,6 +140,31 @@ export interface SignatureRequest {
   id: string; contractId: string; provider: string; status: SignatureRequestStatus; signers: SignatureSigner[]; externalId: string; sentAt: string; sentBy: string
 }
 
+// ───────────── Module 3: agreements (fulfillment ledger, mock Sales/Procurement/Inventory documents) ─────────────
+export type DocType = 'SOR' | 'DLN' | 'INV' | 'RET' | 'SIN' | 'POR' | 'PDN' | 'PCH' | 'RPC' | 'SOT'
+export type DocState = 'Active' | 'Cancelled' | 'Reversed' | 'Deleted' | 'Unlinked'
+export type CounterType = 'Release' | 'Fulfill' | 'Invoice'
+export type LedgerReason = 'Posted' | 'Cancelled' | 'Returned' | 'Reversed' | 'Edited' | 'Recalculated' | 'Exceeded'
+export interface MockDocLine {
+  id: string; itemId: string; qty: number
+  /** Unit price and net value in the document currency; local value in IQD. */
+  unitPrice: number; netValueDoc: number; netValueLocal: number; agreementLineNum?: number
+}
+/** A document of the Sales / Procurement / Inventory modules, simulated by the demo document simulator. */
+export interface MockDoc {
+  id: string; docType: DocType; ref: string; date: string; partnerId: string; organizationId: string; currency: CurrencyCode
+  /** IQD per 1 unit of `currency` on the document. */
+  rate: number; agreementId?: string; baseDocId?: string; stockMovement?: boolean; state: DocState; revision: number; lines: MockDocLine[]
+}
+export interface LedgerEntry {
+  id: string; contractId: string; lineId: string; lineNum: number; entryType: CounterType
+  sourceDocType: DocType; sourceDocId: string; sourceLineId: string; sourceDocRef: string; sourceDocDate: string; sourceRevision: number; sequence: number
+  quantityDelta: number; valueDelta: number; docCurrency: CurrencyCode; docValueDelta: number; rateUsed: number; reason: LedgerReason; createdOn: string
+}
+/** Derived cache of the ledger per line (recalculate rebuilds it). Values in the contract currency. */
+export interface LineBalance { relQ: number; relV: number; fulQ: number; fulV: number; invQ: number; invV: number }
+export interface DeliveryScheduleItem { id: string; lineId: string; dueDate: string; quantity: number; value?: number; note: string }
+
 export interface DB {
   /** Current role and user (role switcher). */
   role: RoleId
@@ -182,4 +207,8 @@ export interface DB {
   tasks: TaskItem[]
   delegations: ApprovalDelegation[]
   signatureRequests: SignatureRequest[]
+  mockDocs: MockDoc[]
+  ledger: LedgerEntry[]
+  balances: Record<string, LineBalance>
+  schedules: DeliveryScheduleItem[]
 }

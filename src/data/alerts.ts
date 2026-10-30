@@ -5,12 +5,12 @@ import { graceEnd, noticeDeadline, typeOf } from './lifecycle'
 import { daysSetting } from './settings'
 import type { Contract, DB } from './types'
 
-export type AlertRule = 'Expiry' | 'NoticeDeadline' | 'Expired' | 'ApprovalPending' | 'SignatureMissing'
+export type AlertRule = 'Expiry' | 'NoticeDeadline' | 'Expired' | 'ApprovalPending' | 'SignatureMissing' | 'Exceeded'
 export interface Alert {
   key: string; contractId: string; contractNumber: string; rule: AlertRule; severity: 'info' | 'warn' | 'danger'; text: string; dueDate?: string; recipient: 'owner+managers'
 }
 export const ruleLabel: Record<AlertRule, string> = {
-  Expiry: 'قرب الانتهاء', NoticeDeadline: 'مهلة الإشعار', Expired: 'عقد منتهٍ', ApprovalPending: 'اعتماد معلّق', SignatureMissing: 'توقيع ناقص',
+  Expiry: 'قرب الانتهاء', NoticeDeadline: 'مهلة الإشعار', Expired: 'عقد منتهٍ', ApprovalPending: 'اعتماد معلّق', SignatureMissing: 'توقيع ناقص', Exceeded: 'تجاوز الالتزام',
 }
 
 const thresholds = (db: DB, c: Contract, which: 'expiry' | 'notice') => {
@@ -50,6 +50,8 @@ export function computeAlerts(db: DB): Alert[] {
     if (c.status === 'PendingSignature' && daysTo(today(), lastMove(db, c)) >= 3) {
       push(c, 'SignatureMissing', 'warn', `العقد بانتظار التوقيع منذ ${daysTo(today(), lastMove(db, c))} يوماً`)
     }
+    const over = db.ledger.filter((e) => e.contractId === c.id && e.reason === 'Exceeded').length
+    if (over) push(c, 'Exceeded', 'danger', `${over} قيد تجاوز في دفتر التنفيذ — مستندات حُفظت رغم تجاوز الحد، يلزم المراجعة`)
   })
   const sev = { danger: 0, warn: 1, info: 2 }
   return out.sort((a, b) => sev[a.severity] - sev[b.severity] || (a.dueDate ?? '').localeCompare(b.dueDate ?? ''))

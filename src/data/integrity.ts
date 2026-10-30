@@ -1,5 +1,6 @@
 // Referential-integrity checks over the seed/DB. Used by scripts/integrity-check.ts (npm run check) and the /health screen.
 // Module steps append their own checks (ledger = balances, version continuity, ...).
+import { COUNTERS, hasDrift, signsOf } from './fulfillment'
 import type { DB } from './types'
 
 export function checkFoundation(db: DB): string[] {
@@ -23,7 +24,7 @@ export function checkFoundation(db: DB): string[] {
   if (!db.users.some((u) => u.id === db.userId && u.role === db.role)) errs.push('current user does not match current role')
   const roles = new Set(db.users.map((u) => u.role))
   Object.keys(db.rolePerms).forEach((r) => { if (!roles.has(r as never)) errs.push(`no user has role ${r}`) })
-  errs.push(...checkContracts(db), ...checkWorkflow(db))
+  errs.push(...checkContracts(db), ...checkWorkflow(db), ...checkAgreements(db))
   return errs
 }
 
@@ -92,5 +93,42 @@ export function checkWorkflow(db: DB): string[] {
     if (!cs.has(r.contractId)) errs.push(`signature request ${r.id}: unknown contract`)
     if (r.status === 'Signed' && r.signers.some((s) => s.status !== 'Signed')) errs.push(`signature request ${r.id}: Signed with pending signers`)
   })
+  return errs
+}
+
+/** Module 3: documents, ledger = current contribution of every source line, ledger = balances, schedules. */
+export function checkAgreements(db: DB): string[] {
+  const errs: string[] = []
+  const cs = new Map(db.contracts.map((c) => [c.id, c]))
+  const docs = new Map(db.mockDocs.map((d) => [d.id, d]))
+  if (docs.size !== db.mockDocs.length) errs.push('mockDocs: duplicate ids')
+  db.mockDocs.forEach((doc) => {
+    if (doc.agreementId && !cs.has(doc.agreementId)) errs.push(`doc ${doc.ref}: unknown agreement`)
+    if (doc.baseDocId && !docs.has(doc.baseDocId)) errs.push(`doc ${doc.ref}: unknown base document`)
+    const c = doc.agreementId ? cs.get(doc.agreementId) : undefined
+    if (!c) return
+    const signs = signsOf(db, c, doc)
+    doc.lines.forEach((ln) => {
+      if (!ln.agreementLineNum) return
+      const line = db.lines.find((l) => l.contractId === c.id && l.lineNum === ln.agreementLineNum)
+      if (!line) { errs.push(`doc ${doc.ref}: unknown agreement line ${ln.agreementLineNum}`); return }
+      COUNTERS.forEach((ct) => {
+        const q = db.ledger.filter((e) => e.sourceLineId === ln.id && e.entryType === ct).reduce((s, e) => s + e.quantityDelta, 0)
+        const want = (signs[ct] ?? 0) * ln.qty
+        if (Math.abs(q - want) > 0.0001) errs.push(`doc ${doc.ref} line ${ln.id}: ledger ${ct} ${q} != contribution ${want}`)
+      })
+    })
+  })
+  const ids = new Set<string>()
+  db.ledger.forEach((e) => {
+    if (ids.has(e.id)) errs.push(`ledger ${e.id}: duplicate`)
+    ids.add(e.id)
+    if (!cs.has(e.contractId)) errs.push(`ledger ${e.id}: unknown contract`)
+    if (!docs.has(e.sourceDocId)) errs.push(`ledger ${e.id}: unknown source document`)
+    if (!db.lines.some((l) => l.id === e.lineId)) errs.push(`ledger ${e.id}: unknown line`)
+  })
+  db.lines.forEach((l) => { if (hasDrift(db, l.id)) errs.push(`line ${l.id}: balance differs from ledger sum`) })
+  const lines = new Set(db.lines.map((l) => l.id))
+  db.schedules.forEach((s) => { if (!lines.has(s.lineId)) errs.push(`schedule ${s.id}: unknown line`) })
   return errs
 }
