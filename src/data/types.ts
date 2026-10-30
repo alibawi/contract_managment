@@ -244,7 +244,7 @@ export interface TemplateVersion {
 export interface ContractTerm {
   id: string; contractId: string; order: number; section: string; title: string; body: string; clauseVersionId?: string; isOptional: boolean; isIncluded: boolean; isFree: boolean
 }
-export interface PrintLogEntry { id: string; contractId: string; at: string; byUserId: string; draft: boolean }
+export interface PrintLogEntry { id: string; contractId: string; at: string; byUserId: string; draft: boolean; doc?: string }
 
 // ───────────── Module 7: service contracts (coverage, SLA, service-call simulator) ─────────────
 export interface ServiceLevel {

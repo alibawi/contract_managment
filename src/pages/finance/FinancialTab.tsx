@@ -1,5 +1,6 @@
 import { FileText, Pencil, Plus, ReceiptText, Trash2, Wallet } from 'lucide-react'
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { DataTable, type Column } from '../../components/DataTable'
 import { KPICard } from '../../components/display'
 import { DateInput } from '../../components/inputs'
@@ -32,6 +33,7 @@ export function FinancialTab({ c }: { c: Contract }) {
   const bills = db.billingLog.filter((b) => b.contractId === c.id)
   return (
     <div className="space-y-4">
+      <div className="flex justify-end"><Link className="btn" to={`/contracts/${c.id}/print?doc=obligations`}>طباعة كشف الالتزامات والدفعات</Link></div>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <KPICard label="قيمة العقد" value={money(s.contractValue, cur)} icon={Wallet} /><KPICard label="المفوتر" value={money(s.invoicedValue, cur)} tone="blue" />
         <KPICard label="المدفوع" value={na ? 'غير متاح' : money(s.paidValue, cur)} tone={na ? 'amber' : 'green'} hint={na ? `${s.unsettled} فاتورة تنتظر تسوية Finance` : undefined} />

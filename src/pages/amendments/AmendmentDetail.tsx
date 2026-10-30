@@ -51,6 +51,7 @@ export default function AmendmentDetail() {
           <div>
             <PageHeader crumbs={[{ label: 'العقود', to: '/contracts' }, { label: c.number, to: `/contracts/${c.id}` }, { label: `ملحق ${a.amendmentNo}` }]} title={`ملحق ${a.amendmentNo} — ${amendTypeLabel[a.type]}`} badge={<AmendStatusBadge status={a.status} />}
               actions={<>
+                <Link className="btn" to={`/contracts/${c.id}/print?doc=amendment`}>طباعة الملحق</Link>
                 {a.status === 'Draft' && mine && <button type="button" className="btn" onClick={() => nav(`/contracts/${c.id}/amend/${a.id}`)}>تعديل</button>}
                 {a.status === 'Draft' && mine && <button type="button" className="btn btn-primary" onClick={() => exec((d) => submitAmendment(d, a.id), 'أُرسل الملحق للاعتماد')}>إرسال للاعتماد</button>}
                 {a.status === 'PendingApproval' && can('Contracts.Approve') && <button type="button" className="btn btn-primary" disabled={!el?.ok} title={el?.reason} onClick={() => { setDlg('Approved'); setErr('') }}>اعتماد</button>}

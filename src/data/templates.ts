@@ -190,13 +190,33 @@ export function removeTerm(d: DB, termId: string): string | null {
 }
 
 // ───────────── print (BR-T-06) ─────────────
-export const designTemplate = { code: 'CONTRACT_AR_A4', name: 'عقد — A4 عربي', header: true, footer: true, signatureBlock: true, watermarkDraft: true }
+/** The printable documents of a contract. In the real system each is a Core DesignTemplate (designer UI with versions); here a CSS page per document. */
+export const printDocDefs = [
+  { id: 'contract', code: 'CONTRACT_AR_A4', name: 'العقد' },
+  { id: 'summary', code: 'CONTRACT_SUMMARY_AR_A4', name: 'ملخص العقد' },
+  { id: 'approval', code: 'APPROVAL_RECORD_AR_A4', name: 'سجل الاعتماد' },
+  { id: 'fulfillment', code: 'FULFILLMENT_STMT_AR_A4', name: 'كشف تنفيذ الاتفاقية' },
+  { id: 'obligations', code: 'OBLIGATIONS_STMT_AR_A4', name: 'كشف الالتزامات والدفعات' },
+  { id: 'amendment', code: 'AMENDMENT_AR_A4', name: 'ملحق العقد' },
+  { id: 'service', code: 'SERVICE_STMT_AR_A4', name: 'كشف الخدمة ومستوى الخدمة' },
+] as const
+export type PrintDocId = (typeof printDocDefs)[number]['id']
+/** Documents that make sense for this contract (so the picker never offers an empty statement). */
+export function printDocsFor(db: DB, c: Contract): PrintDocId[] {
+  const has = (k: PrintDocId) => k === 'contract' || k === 'summary'
+    || (k === 'approval' && db.approvalRequests.some((r) => r.contractId === c.id))
+    || (k === 'fulfillment' && c.profile === 'Agreement')
+    || (k === 'obligations' && (db.obligations.some((o) => o.contractId === c.id) || db.paymentItems.some((p) => p.contractId === c.id)))
+    || (k === 'amendment' && db.amendments.some((a) => a.contractId === c.id))
+    || (k === 'service' && c.profile === 'Service')
+  return printDocDefs.map((d) => d.id).filter(has)
+}
 export const printCount = (db: DB, contractId: string) => db.printLog.filter((p) => p.contractId === contractId).length
-export function logPrint(d: DB, contractId: string): string | null {
+export function logPrint(d: DB, contractId: string, doc: PrintDocId = 'contract'): string | null {
   const c = d.contracts.find((x) => x.id === contractId)
   if (!c) return 'العقد غير موجود'
-  d.printLog.push({ id: uid('prt'), contractId, at: nowStamp(), byUserId: d.userId, draft: c.status === 'Draft' })
-  d.audit.push({ id: uid('aud'), at: nowStamp(), userId: d.userId, entity: 'contract', entityId: contractId, action: 'print', detail: c.status === 'Draft' ? 'طباعة مسودة' : 'طباعة' })
+  d.printLog.push({ id: uid('prt'), contractId, at: nowStamp(), byUserId: d.userId, draft: c.status === 'Draft', doc })
+  d.audit.push({ id: uid('aud'), at: nowStamp(), userId: d.userId, entity: 'contract', entityId: contractId, action: 'print', detail: `${printDocDefs.find((x) => x.id === doc)?.name ?? doc}${c.status === 'Draft' ? ' (مسودة)' : ''}` })
   return null
 }
 export const isDraftPrint = (c: Contract) => c.status === 'Draft'

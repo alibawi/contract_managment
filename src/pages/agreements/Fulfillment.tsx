@@ -65,7 +65,7 @@ export function FulfillmentTab({ c }: { c: Contract }) {
         <span>المرتجع يعيد الالتزام: <b>{cfg.restore ? 'نعم' : 'لا'}</b></span><span>·</span>
         <span>عند الفشل: <b>{cfg.onFail === 'Rollback' ? 'إلغاء المستند' : 'حفظ مع تنبيه'}</b></span><span>·</span>
         <span>سعر التحويل: <b>{cfg.rateSource === 'ActivationRate' ? 'سعر التفعيل' : 'سعر تاريخ المستند'}</b></span>
-        <Link to="/agreements/simulator" className="ms-auto text-navy underline">محاكي المستندات</Link>
+        <Link to={`/contracts/${c.id}/print?doc=fulfillment`} className="ms-auto text-navy underline">طباعة كشف التنفيذ</Link><Link to="/agreements/simulator" className="text-navy underline">محاكي المستندات</Link>
       </div>
       <Card title="ملخص التنفيذ لكل بند" pad={false} actions={
         <div className="flex items-center gap-2">

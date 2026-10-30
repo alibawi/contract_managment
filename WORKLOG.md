@@ -269,3 +269,8 @@
 **Verification (actual):** `tsc -b` clean, `npm run build` ok, `npm run check` and all seven `check:*` suites pass; partner filter returns 1 contract for the first customer.
 
 **Not done:** inspection of the narrow (phone) layout and the browser print dialog output; saved report filters.
+
+## 2026-10-30 — Printable document set
+
+**Completed:** the print page is now a print centre with 7 documents per contract (picker shows only those that apply): contract, contract summary, approval record, fulfillment statement (agreements), obligations and payments statement, amendment, service statement. Each has its own mock design template code; printing logs which document. Entry links added on the fulfillment, financial, service, approval and amendment screens. `check:templates` extended (document set per contract kind, print log).
+**Verification:** tsc and build ok, check:templates passes; browser: all 9 combinations tried on c-01 and c-16 render a sheet with tables. Not run again after this change: the other check suites; no visual screenshot of the new statements.

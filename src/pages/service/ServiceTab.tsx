@@ -99,7 +99,7 @@ export function ServiceTab({ c }: { c: Contract }) {
         <p className="border-t border-line px-4 py-2 text-[11px] text-gray-400">بطاقات المعدات الفعلية من وحدة الأصول (قريباً)؛ هنا مرجع نصي فقط.</p>
       </Card>
 
-      <Card title="آخر البلاغات" pad={false} actions={<Link className="btn" to="/service/calls">محاكي البلاغات</Link>}>
+      <Card title="آخر البلاغات" pad={false} actions={<span className="flex gap-2"><Link className="btn" to={`/contracts/${c.id}/print?doc=service`}>طباعة كشف الخدمة</Link><Link className="btn" to="/service/calls">محاكي البلاغات</Link></span>}>
         <DataTable rows={calls} compact emptyTitle="لا بلاغات" columns={[
           { key: 'n', label: 'البلاغ', render: (x: ServiceCall) => <span dir="ltr">{x.no}</span> }, { key: 'o', label: 'فُتح', render: (x: ServiceCall) => fmtStamp(x.openedAt) },
           { key: 's', label: 'الحالة', render: (x: ServiceCall) => <Badge tone="gray">{statusText[x.status]}</Badge> }, { key: 'l', label: 'SLA', render: (x: ServiceCall) => <SlaBadge s={callSla(db, x).worst} /> },

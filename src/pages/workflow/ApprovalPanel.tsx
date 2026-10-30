@@ -19,6 +19,7 @@ export function ApprovalPanel({ c }: { c: Contract }) {
   }
   return (
     <div className="space-y-4">
+      <div className="flex justify-end"><Link className="btn" to={`/contracts/${c.id}/print?doc=approval`}>طباعة سجل الاعتماد</Link></div>
       {reqs.map((r, i) => {
         const actions = db.approvalActions.filter((a) => a.requestId === r.id)
         const stages: Stage[] = r.stages.map((s) => {

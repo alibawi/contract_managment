@@ -1,6 +1,6 @@
 import { seed } from '../src/data/seed'
 import { snapshot, diffPayloads } from '../src/data/amendments'
-import { addTerm, copyTerms, createTemplate, hasUnpublishedChanges, isDraftPrint, logPrint, moveTerm, printCount, publishTemplate, removeTerm, resolveText, saveClause, saveTemplateDraft, selectableTemplates, setTemplateArchived, templateDefaultsFor, templateVersions, termsOf, toggleTerm } from '../src/data/templates'
+import { printDocsFor, addTerm, copyTerms, createTemplate, hasUnpublishedChanges, isDraftPrint, logPrint, moveTerm, printCount, publishTemplate, removeTerm, resolveText, saveClause, saveTemplateDraft, selectableTemplates, setTemplateArchived, templateDefaultsFor, templateVersions, termsOf, toggleTerm } from '../src/data/templates'
 import { nextNumber } from '../src/data/lifecycle'
 import { checkTemplates, checkAmendments } from '../src/data/integrity'
 
@@ -66,6 +66,11 @@ ok('snapshot contains clauses', (p1.clauses?.length ?? 0) === termsOf(db, 'c-01'
 const p2 = structuredClone(p1); p2.clauses![0].isIncluded = false; p2.clauses![1].body = 'نص معدّل'
 ok('version diff shows term changes', diffPayloads(db, p1, p2).filter((r) => r.group === 'terms').length === 2)
 
+const docsOf = (id: string) => printDocsFor(db, db.contracts.find((x) => x.id === id)!)
+ok('print set: agreement with ledger has contract, summary, approval, fulfillment, obligations, amendment', ['contract', 'summary', 'approval', 'fulfillment', 'obligations', 'amendment'].every((k) => docsOf('c-01').includes(k as never)) && !docsOf('c-01').includes('service' as never), docsOf('c-01').join())
+ok('print set: service contract gets the service statement but no fulfillment statement', docsOf('c-16').includes('service' as never) && !docsOf('c-16').includes('fulfillment' as never))
+ok('print set: a plain general contract only gets contract and summary', docsOf('c-28').join() === 'contract,summary')
+ok('printing a statement is logged with its document', logPrint(db, 'c-01', 'fulfillment') === null && db.printLog.at(-1)!.doc === 'fulfillment')
 ok('integrity (templates)', checkTemplates(db).length === 0, checkTemplates(db).join('|'))
 ok('integrity (amendments)', checkAmendments(db).length === 0, checkAmendments(db).join('|'))
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED')
