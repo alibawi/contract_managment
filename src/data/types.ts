@@ -74,7 +74,7 @@ export interface Contract {
   startDate: string; endDate?: string; signatureDate?: string; effectiveDate?: string; terminationDate?: string
   renewalPolicy: RenewalPolicy; noticePeriodDays?: number; autoRenewTermMonths?: number; reminderDaysOverride?: string
   confidentiality: Confidentiality; language: 'ar'; externalReference?: string
-  parentContractId?: string; renewedFromContractId?: string; successorContractId?: string
+  parentContractId?: string; renewedFromContractId?: string; successorContractId?: string; templateVersionId?: string
   agreementMode?: 'Specific' | 'General'; overridesPrices: boolean
   closureReason?: ClosureReason; activatedOn?: string; activatedBy?: string
   description: string; internalNotes: string; createdBy: string; createdAt: string
@@ -188,6 +188,7 @@ export interface VersionPayload {
   parties: Pick<ContractParty, 'id' | 'role' | 'name' | 'contactName' | 'email' | 'phone' | 'signatoryTitle'>[]
   lines: Pick<ContractLine, 'lineNum' | 'itemId' | 'categoryId' | 'description' | 'commitmentType' | 'agreedQuantity' | 'agreedValue' | 'unitPrice' | 'discountPercent' | 'minRelease' | 'maxRelease' | 'validTo' | 'status' | 'notes'>[]
   signatures: { role: string; signerName: string; signedOn: string }[]
+  clauses?: { order: number; title: string; body: string; isIncluded: boolean }[]
 }
 export interface ContractVersion {
   id: string; contractId: string; versionNo: number; reason: 'Activation' | 'Amendment' | 'Renewal'; amendmentId?: string
@@ -221,6 +222,25 @@ export interface BillingRecord {
   template: boolean; ledgerDocId?: string; note: string; createdBy: string
 }
 export interface Guarantee { id: string; contractId: string; type: 'Performance' | 'Advance' | 'Retention'; amount: number; currency: CurrencyCode; issuer: string; expiryDate: string; status: 'Active' | 'Expired' | 'Released' }
+
+// ───────────── Module 6: templates, clauses, contract terms, print ─────────────
+export interface Clause { id: string; code: string; title: string; category: string; currentVersionNo: number; isActive: boolean }
+export interface ClauseVersion { id: string; clauseId: string; versionNo: number; body: string; publishedOn: string; publishedBy: string }
+export interface TemplateDefaults {
+  durationMonths?: number; renewalPolicy?: RenewalPolicy; noticePeriodDays?: number; paymentTermId?: string; deliveryTerms?: string
+  approvalWorkflowLabel?: string; billingDefaults?: string; slaDefaults?: string
+}
+/** Working copy of a template: clauses are referenced by clause (the version is fixed at publish). */
+export interface TemplateDraft { defaults: TemplateDefaults; clauses: { clauseId: string; order: number; isOptional: boolean }[]; attachments: string[] }
+export interface ContractTemplate { id: string; code: string; name: string; typeId: string; currentVersionNo: number; status: 'Draft' | 'Published' | 'Archived'; draft: TemplateDraft }
+export interface TemplateVersion {
+  id: string; templateId: string; versionNo: number; defaults: TemplateDefaults; clauseRefs: { clauseVersionId: string; order: number; isOptional: boolean }[]
+  attachments: string[]; publishedOn: string; publishedBy: string
+}
+export interface ContractTerm {
+  id: string; contractId: string; order: number; section: string; title: string; body: string; clauseVersionId?: string; isOptional: boolean; isIncluded: boolean; isFree: boolean
+}
+export interface PrintLogEntry { id: string; contractId: string; at: string; byUserId: string; draft: boolean }
 
 export interface DB {
   /** Current role and user (role switcher). */
@@ -275,4 +295,10 @@ export interface DB {
   paymentItems: PaymentItem[]
   billingLog: BillingRecord[]
   guarantees: Guarantee[]
+  clauses: Clause[]
+  clauseVersions: ClauseVersion[]
+  templates: ContractTemplate[]
+  templateVersions: TemplateVersion[]
+  terms: ContractTerm[]
+  printLog: PrintLogEntry[]
 }

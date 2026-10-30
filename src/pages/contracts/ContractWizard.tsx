@@ -10,6 +10,7 @@ import { addDays, addMonths, today } from '../../data/asof'
 import { convertAmount } from '../../data/currency'
 import { confLabel, directionLabel, profileLabel, renewalLabel } from '../../data/contractMeta'
 import { fmtDate, money, nowStamp, uid } from '../../data/format'
+import { copyTerms, selectableTemplates, templateDefaultsFor } from '../../data/templates'
 import { canSee, nextNumber, partnerName, perform, validateSubmit } from '../../data/lifecycle'
 import { addAudit, useStore } from '../../data/store'
 import type { Confidentiality, Contract, ContractAttachmentRow, ContractLine, CurrencyCode, Direction, RenewalPolicy } from '../../data/types'
@@ -83,6 +84,7 @@ export default function ContractWizard() {
         savedId = nid
         d.contracts.push({ ...f, id: nid, number: nextNumber(d, f.typeId, f.startDate), createdBy: d.userId, createdAt: nowStamp(), status: 'Draft', versionNo: 0, ownerUserId: f.ownerUserId })
         d.history.push({ id: uid('h'), contractId: nid, to: 'Draft', byUserId: d.userId, at: nowStamp(), reason: 'إنشاء' })
+        if (f.templateVersionId) copyTerms(d, nid, f.templateVersionId) // BR-T-02: frozen copy, no live link
         addAudit(d, 'contract', nid, 'create', f.title)
         const partner = d.partners.find((p) => p.id === f.counterpartyId)
         d.parties.push({ id: uid('pty'), contractId: nid, role: 'Counterparty', partnerId: partner?.id, name: partner?.name ?? f.counterpartyName ?? 'إدارة داخلية', contactName: partner?.contact ?? '', email: partner?.email ?? '', phone: partner?.phone ?? '', signatoryTitle: 'المدير المفوّض', isPrimary: true })
@@ -147,6 +149,13 @@ export default function ContractWizard() {
               <SearchableSelect value={f.typeId} onChange={pickType} disabled={locked} clearable={false}
                 options={db.contractTypes.filter((t) => t.isActive).map((t) => ({ value: t.id, label: t.name, hint: profileLabel[t.profile] }))} />
             </Field>
+            {!existing && (
+              <Field label="القالب (اختياري)" span={2} hint="ينسخ القيم الافتراضية والبنود القانونية ولا يرتبط بالقالب لاحقاً">
+                <Select value={f.templateVersionId ?? ''} placeholder="بدون قالب" disabled={!f.typeId}
+                  onChange={(v) => setF((x) => (v ? { ...x, ...templateDefaultsFor(db, v, x.startDate) } : { ...x, templateVersionId: undefined }))}
+                  options={selectableTemplates(db, f.typeId).map((tp) => ({ value: tp.id + '-v' + tp.currentVersionNo, label: `${tp.name} (v${tp.currentVersionNo})` }))} />
+              </Field>
+            )}
             <Field label="الاتجاه" required>
               <Select value={f.direction} onChange={(v: Direction) => { set('direction', v); set('counterpartyId', undefined) }} disabled={locked} options={(Object.keys(directionLabel) as Direction[]).map((d) => ({ value: d, label: directionLabel[d] }))} />
             </Field>

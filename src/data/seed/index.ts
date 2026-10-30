@@ -7,6 +7,7 @@ import * as s from './shared'
 import { agreementsSeed } from './agreements'
 import { amendmentsSeed } from './amendments'
 import { financeSeed } from './finance'
+import { templatesSeed } from './templates'
 import { workflowSeed } from './workflow'
 
 /** Fresh demo database. Module seeds (contracts, agreements, ...) are merged here by each module step. */
@@ -60,9 +61,16 @@ export function seed(): DB {
     paymentItems: [],
     billingLog: [],
     guarantees: [],
+    clauses: [],
+    clauseVersions: [],
+    templates: [],
+    templateVersions: [],
+    terms: [],
+    printLog: [],
   }
   workflowSeed(db)
   agreementsSeed(db)
+  templatesSeed(db)
   amendmentsSeed(db)
   financeSeed(db)
   return db

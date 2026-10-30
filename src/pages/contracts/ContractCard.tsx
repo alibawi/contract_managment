@@ -19,6 +19,7 @@ import { AmendmentsTab, VersionsTab } from '../amendments/Tabs'
 import { RenewButton } from '../amendments/Renewals'
 import { FinancialTab } from '../finance/FinancialTab'
 import { ObligationsTab } from '../finance/ObligationsTab'
+import { TermsTab } from '../templates/TermsTab'
 import { AttachmentsTab, GeneralTab, LinksTab, LinesTab, PartiesTab, SignaturesTab, SoonTab, TimelineTab } from './tabs'
 
 type Tab = 'general' | 'parties' | 'lines' | 'terms' | 'attachments' | 'signatures' | 'approvals' | 'amendments' | 'versions' | 'fulfillment' | 'links' | 'obligations' | 'financial' | 'service' | 'timeline'
@@ -67,7 +68,7 @@ export default function ContractCard() {
             case 'approvals': return <ApprovalPanel c={c} />
             case 'links': return <div className="space-y-4">{c.profile === 'Agreement' && <AgreementDocs c={c} />}<LinksTab c={c} /></div>
             case 'timeline': return <TimelineTab c={c} />
-            case 'terms': return <SoonTab title="البنود القانونية" module="القوالب والطباعة" />
+            case 'terms': return <TermsTab c={c} />
             case 'amendments': return <AmendmentsTab c={c} />
             case 'versions': return <VersionsTab c={c} />
             case 'fulfillment': return <FulfillmentTab c={c} />
@@ -80,7 +81,7 @@ export default function ContractCard() {
           <div>
             <PageHeader crumbs={[{ label: 'العقود', to: '/contracts' }, { label: c.number }]} title={c.title}
               badge={<span className="flex items-center gap-1.5"><ContractStatusBadge status={c.status} /><ConfidentialityBadge level={c.confidentiality} /></span>}
-              actions={<><RenewButton c={c} /><ContractActionBar contract={c} /></>} />
+              actions={<><Link className="btn" to={`/contracts/${c.id}/print`}>طباعة</Link><RenewButton c={c} /><ContractActionBar contract={c} /></>} />
             {(pred || succ) && (
               <div className="mb-3 flex flex-wrap gap-4 rounded-md bg-sky-50 px-3 py-2 text-xs text-sky-900">
                 {pred && <span>جُدِّد من: <Link className="underline" to={`/contracts/${pred.id}`} dir="ltr">{pred.number}</Link></span>}

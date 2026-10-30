@@ -26,7 +26,7 @@ export function checkFoundation(db: DB): string[] {
   if (!db.users.some((u) => u.id === db.userId && u.role === db.role)) errs.push('current user does not match current role')
   const roles = new Set(db.users.map((u) => u.role))
   Object.keys(db.rolePerms).forEach((r) => { if (!roles.has(r as never)) errs.push(`no user has role ${r}`) })
-  errs.push(...checkContracts(db), ...checkWorkflow(db), ...checkAgreements(db), ...checkAmendments(db), ...checkFinance(db))
+  errs.push(...checkContracts(db), ...checkWorkflow(db), ...checkAgreements(db), ...checkAmendments(db), ...checkFinance(db), ...checkTemplates(db))
   return errs
 }
 
@@ -203,6 +203,35 @@ export function checkFinance(db: DB): string[] {
     const items = db.paymentItems.filter((p) => p.contractId === c.id && p.status !== 'Cancelled')
     if (items.reduce((s, p) => s + (p.percent ?? 0), 0) > 100.0001) errs.push(`contract ${c.id}: payment percents exceed 100`)
     if (c.status === 'Terminated') db.obligations.filter((o) => o.contractId === c.id && !o.survivesTermination && !['Cancelled', 'Accepted', 'Waived'].includes(o.status)).forEach((o) => errs.push(`obligation ${o.id}: open after termination`))
+  })
+  return errs
+}
+
+/** Module 6: clause/template versions are contiguous, template versions reference real clause versions, terms are frozen copies. */
+export function checkTemplates(db: DB): string[] {
+  const errs: string[] = []
+  db.clauses.forEach((c) => {
+    const vs = db.clauseVersions.filter((v) => v.clauseId === c.id).sort((a, b) => a.versionNo - b.versionNo)
+    if (vs.length !== c.currentVersionNo || vs.some((v, i) => v.versionNo !== i + 1)) errs.push(`clause ${c.code}: versions not contiguous`)
+  })
+  const cvs = new Set(db.clauseVersions.map((v) => v.id))
+  db.templates.forEach((t) => {
+    const vs = db.templateVersions.filter((v) => v.templateId === t.id).sort((a, b) => a.versionNo - b.versionNo)
+    if (vs.length !== t.currentVersionNo || vs.some((v, i) => v.versionNo !== i + 1)) errs.push(`template ${t.code}: versions not contiguous`)
+    if (t.status === 'Draft' && t.currentVersionNo) errs.push(`template ${t.code}: Draft with versions`)
+    if (!db.contractTypes.some((x) => x.id === t.typeId)) errs.push(`template ${t.code}: unknown type`)
+  })
+  db.templateVersions.forEach((v) => v.clauseRefs.forEach((r) => { if (!cvs.has(r.clauseVersionId)) errs.push(`template version ${v.id}: unknown clause version`) }))
+  const tvs = new Set(db.templateVersions.map((v) => v.id))
+  db.contracts.forEach((c) => {
+    if (c.templateVersionId && !tvs.has(c.templateVersionId)) errs.push(`contract ${c.id}: unknown template version`)
+    const orders = db.terms.filter((t) => t.contractId === c.id).map((t) => t.order)
+    if (new Set(orders).size !== orders.length) errs.push(`contract ${c.id}: duplicate term order`)
+  })
+  db.terms.forEach((t) => {
+    if (!db.contracts.some((c) => c.id === t.contractId)) errs.push(`term ${t.id}: unknown contract`)
+    if (t.clauseVersionId && !cvs.has(t.clauseVersionId)) errs.push(`term ${t.id}: unknown clause version`)
+    if (t.clauseVersionId && db.clauseVersions.find((v) => v.id === t.clauseVersionId)!.body !== t.body) errs.push(`term ${t.id}: body differs from its clause version (not a frozen copy)`)
   })
   return errs
 }

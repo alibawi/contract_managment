@@ -46,6 +46,7 @@ export function snapshot(d: DB, c: Contract): VersionPayload {
     lines: d.lines.filter((l) => l.contractId === c.id).sort((a, b) => a.lineNum - b.lineNum)
       .map((l) => pick(l, 'lineNum', 'itemId', 'categoryId', 'description', 'commitmentType', 'agreedQuantity', 'agreedValue', 'unitPrice', 'discountPercent', 'minRelease', 'maxRelease', 'validTo', 'status', 'notes')),
     signatures: d.signatures.filter((s) => s.contractId === c.id).map((s) => ({ role: s.role, signerName: s.signerName, signedOn: s.signedOn })),
+    clauses: d.terms.filter((t) => t.contractId === c.id).sort((a, b) => a.order - b.order).map((t) => ({ order: t.order, title: t.title, body: t.body, isIncluded: t.isIncluded })),
   })
 }
 const stable = (v: unknown): string => (Array.isArray(v) ? `[${v.map(stable).join(',')}]` : v && typeof v === 'object'
@@ -87,6 +88,17 @@ export function diffPayloads(db: DB, a: VersionPayload, b: VersionPayload): Diff
     lf.forEach(([k, t]) => { if (stable(o[k]) !== stable(l[k])) out.push({ group: 'lines', label: `${lineName(l)} — ${t}`, from: show(k === 'status' ? (o[k] === 'Open' ? 'مفتوح' : 'مغلق') : o[k]), to: show(k === 'status' ? (l[k] === 'Open' ? 'مفتوح' : 'مغلق') : l[k]), kind: 'changed' }) })
   })
   a.lines.filter((l) => !b.lines.some((x) => x.lineNum === l.lineNum)).forEach((l) => out.push({ group: 'lines', label: lineName(l), from: show(l.agreedQuantity ?? l.agreedValue), kind: 'removed' }))
+  // BR-T-07: contract terms are part of the version payload
+  const ca = a.clauses ?? [], cb = b.clauses ?? []
+  cb.forEach((t) => {
+    const o = ca.find((x) => x.title === t.title)
+    if (!o) out.push({ group: 'terms', label: `بند: ${t.title}`, to: t.isIncluded ? 'مُضاف' : 'مُضاف (مستبعد)', kind: 'added' })
+    else {
+      if (o.body !== t.body) out.push({ group: 'terms', label: `نص البند: ${t.title}`, from: o.body.slice(0, 80), to: t.body.slice(0, 80), kind: 'changed' })
+      if (o.isIncluded !== t.isIncluded) out.push({ group: 'terms', label: `تضمين البند: ${t.title}`, from: o.isIncluded ? 'مضمَّن' : 'مستبعد', to: t.isIncluded ? 'مضمَّن' : 'مستبعد', kind: 'changed' })
+    }
+  })
+  ca.filter((t) => !cb.some((x) => x.title === t.title)).forEach((t) => out.push({ group: 'terms', label: `بند: ${t.title}`, from: 'موجود', kind: 'removed' }))
   b.parties.forEach((p) => {
     const o = a.parties.find((x) => x.id === p.id)
     if (!o) { out.push({ group: 'parties', label: `${p.name}`, to: `${p.contactName} — ${p.signatoryTitle}`, kind: 'added' }); return }

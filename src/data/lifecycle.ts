@@ -213,6 +213,7 @@ export function perform(d: DB, id: string, action: ActionId, p: { reason?: strin
       d.lines = d.lines.filter((x) => x.contractId !== id)
       d.attachments = d.attachments.filter((x) => x.ownerId !== id)
       d.signatures = d.signatures.filter((x) => x.contractId !== id)
+      d.terms = d.terms.filter((x) => x.contractId !== id)
       d.history = d.history.filter((x) => x.contractId !== id)
       d.audit.push({ id: uid('aud'), at: nowStamp(), userId: d.userId, entity: 'contract', entityId: id, action: 'delete', detail: c.number })
       return null

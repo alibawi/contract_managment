@@ -101,7 +101,7 @@ export default function Home() {
           { to: '/agreements', title: 'الاتفاقيات والتنفيذ', hint: 'بنود الالتزام ودفتر التنفيذ وتحويل العملات', icon: Handshake },
           { to: '/amendments', title: 'الملاحق والنسخ والتجديد', hint: 'ملاحق بتاريخ سريان، مقارنة النسخ، التجديد', icon: FilePen },
           { to: '/obligations', title: 'الالتزامات والمالية', hint: 'المراحل والغرامات وجدول الدفعات والملخص المالي', icon: ListChecks },
-          { to: '/templates', title: 'القوالب والطباعة', hint: 'القوالب، مكتبة البنود، معاينة الطباعة', icon: Files, soon: true },
+          { to: '/templates', title: 'القوالب والطباعة', hint: 'القوالب، مكتبة البنود، معاينة الطباعة', icon: Files },
           { to: '/service', title: 'عقود الخدمة', hint: 'التغطية ومستوى الخدمة والاستهلاك', icon: Wrench, soon: true },
           { to: '/settings', title: 'الإعدادات والصلاحيات', hint: 'إعدادات النظام ومصفوفة الصلاحيات والترقيم', icon: Settings2, soon: true },
           { to: '/reports', title: 'التقارير', hint: 'لوحة المؤشرات التنفيذية والتقارير R-01…R-17', icon: BarChart3, soon: true },

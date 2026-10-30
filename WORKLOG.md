@@ -169,3 +169,24 @@
 **Verification (actual):** `tsc -b` clean, `npm run build` ok, `npm run check` → integrity OK. `npm run check:finance` (same engine): complete → accept with the separation rule, rejection and rework, dependency block and cycle refusal, overdue by advancing the date, penalties (percent capped, fixed per day, fixed once), recurrence idempotent, termination effect, billing a due item posts +2000 to the ledger line and cannot be repeated, frozen items, settlement unavailable → outstanding unknown, partial and full payment, template billing without document, schedule over 100% warns, alerts — all pass. Browser: board (7 KPIs, kanban columns, overdue column), c-17 obligations tab (dependency chain, penalty 2.5M), financial tab (cards, table, schedule with billing/payment buttons, guarantee, billing records).
 
 **Next step:** owner review, then module 6 «templates-print».
+
+## 2026-10-30 — Module 6: templates-print (6.1–6.7)
+
+**Module / screen:** templates-print — templates list T1 (with KPIs), template editor + versions T2/T3, clause library T4, legal terms tab T5, template picker in the wizard T6, A4 print preview T7.
+
+**Completed**
+- `templates.ts`: clause library with versions (publishing n+1, older versions readable), template working copy → immutable versions with clause versions fixed at publish (BR-T-01), defaults and frozen terms copied into a new contract with no live link (BR-T-02/04), archived templates not selectable (BR-T-03), terms editable only in Draft: include/exclude optional, free-text clause, library clause, reorder (BR-T-05), placeholder resolution at print time, print log (BR-T-06).
+- Version payload (module 4) now includes the contract terms and the compare screen shows term differences (BR-T-07).
+- Seed: 25 clauses (7 with a second version), 8 templates (two with v2, one archived, one never published, several with «changes not published» because a clause moved on), frozen terms on 14 existing contracts from version 1. `npm run check` verifies clause/template version continuity, references, and that every term is an exact copy of its clause version.
+- Screens: templates list with KPIs (contracts from templates, this quarter, top template, top clause), editor with clause picker/order/optional flags/publish/archive and read-only version view, clause library with placeholder chips and version history, terms tab on the contract card, template picker in the wizard (step 1), print page (`/contracts/:id/print`) with header, parties, lines table for agreements, numbered terms, signature block, «مسودة» watermark, print log and browser print.
+
+**Key design decisions**
+- A template's clause list is a working copy referencing clauses; the clause version is pinned when the template is published, so a later clause update shows «تغييرات غير منشورة» on the template instead of changing it silently.
+- The mock design template CONTRACT_AR_A4 is a CSS print page; the real renderer is the Core design-template engine.
+- Mandatory template clauses cannot be removed in Draft; only optional and free-text ones.
+
+**Issues / deferred:** changing terms after Draft needs an amendment operation for clauses (not built; amendments cover header, lines and parties); PDF-to-DMS attachment after print is not simulated.
+
+**Verification (actual):** `tsc -b` clean, `npm run build` ok, `npm run check` → integrity OK. `npm run check:templates` (same engine): clause v2 → template v+1 with older versions unchanged and existing contract terms unchanged, new contract from the new version carries the new text and defaults, Draft-only toggles/free clause/reorder and freeze after Draft, archived template hidden and unpublishable, unknown placeholder and empty template refused, placeholders resolved from current contract values, Draft watermark flag and print count, terms in the version payload and diff — all pass. Browser: templates list (8 rows, KPIs), template editor, print preview of c-01 (resolved text, lines table, v2 values) and of draft c-07 (watermark present), terms tab, wizard template picker present.
+
+**Next step:** owner review, then module 7 «service».

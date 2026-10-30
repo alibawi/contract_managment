@@ -15,6 +15,10 @@ import Renewals from './pages/amendments/Renewals'
 import { VersionCompare } from './pages/amendments/Tabs'
 import ObligationsBoard from './pages/finance/Board'
 import Payments from './pages/finance/Payments'
+import Clauses from './pages/templates/Clauses'
+import Print from './pages/templates/Print'
+import TemplateEditor from './pages/templates/TemplateEditor'
+import Templates from './pages/templates/Templates'
 import Health from './pages/Health'
 import Delegations from './pages/workflow/Delegations'
 import ApprovalStages from './pages/workflow/ApprovalStages'
@@ -48,6 +52,10 @@ export default function App() {
         <Route path="/renewals" element={<Renewals />} />
         <Route path="/obligations" element={<ObligationsBoard />} />
         <Route path="/payments" element={<Payments />} />
+        <Route path="/templates" element={<Templates />} />
+        <Route path="/templates/:id" element={<TemplateEditor key={pathname} />} />
+        <Route path="/clauses" element={<Clauses />} />
+        <Route path="/contracts/:id/print" element={<Print />} />
         <Route path="/health" element={<Health />} />
         <Route path="*" element={<Home />} />
       </Routes>
