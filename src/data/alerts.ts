@@ -1,7 +1,7 @@
 // BR-C-14: alerts are computed from contracts, settings and the demo date; one alert per (contract, rule).
 import { today } from './asof'
 import { daysTo, fmtDate } from './format'
-import { graceEnd, noticeDeadline, typeOf } from './lifecycle'
+import { canSee, graceEnd, noticeDeadline, typeOf } from './lifecycle'
 import { escalationDays, escalationLabel, isOpen, effStatus } from './obligations'
 import { consumed, fmtStamp, levelOf } from './service'
 import { daysSetting } from './settings'
@@ -87,5 +87,6 @@ export function computeAlerts(db: DB): Alert[] {
 export const alertsForUser = (db: DB) =>
   computeAlerts(db).filter((a) => {
     const c = db.contracts.find((x) => x.id === a.contractId)!
+    if (!canSee(db, c)) return false
     return db.role === 'admin' || db.role === 'manager' || c.ownerUserId === db.userId
   })

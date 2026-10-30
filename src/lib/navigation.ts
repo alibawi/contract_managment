@@ -28,7 +28,7 @@ export const contractNav: NavItem[] = [
   { to: '/service', label: 'عقود الخدمة', icon: Wrench, section: 'الخدمة', feature: 'Service', module: 'service' },
   { to: '/service/calls', label: 'مكالمات الخدمة (محاكاة)', icon: Stethoscope, feature: 'Service', module: 'service' },
   { to: '/service/sla', label: 'تقرير مستوى الخدمة', icon: AlarmClock, feature: 'Service', module: 'service' },
-  { to: '/reports', label: 'التقارير', icon: BarChart3, section: 'التقارير', soon: true, module: 'analytics' },
+  { to: '/reports', label: 'التقارير', icon: BarChart3, section: 'التقارير', module: 'analytics' },
   { to: '/settings', label: 'إعدادات النظام', icon: Settings2, section: 'الإعدادات', module: 'settings-access' },
   { to: '/settings/permissions', label: 'مصفوفة الصلاحيات', icon: Lock, module: 'settings-access' },
   { to: '/settings/numbering', label: 'الترقيم', icon: FileClock, module: 'settings-access' },

@@ -233,3 +233,25 @@
 **Verification (actual):** `tsc -b` clean, `npm run build` ok, `npm run check` → integrity OK. `npm run check:settings` (same engine): Warn / Block+Rollback / Block+KeepAndAlert / None replayed on the same simulator case, currency source flips the rate (1310 vs 1400), recorded ledger and balances untouched by a setting flip, restore-off return adds no entries, audit rows with old and new, invalid values refused, defaults restored, matrix toggles change `can()`, admin locked, numbering rules (below-used refused, new series applies to new contracts only, duplicate prefix refused), stage rule edit applies to new submissions while the pending snapshot is unchanged, overlap and delete-with-pending refused, data authority for Org/User/System, billing automation flag — all pass. Browser: settings KPIs, a setting change marked «معدّل» and logged in the audit page with Warn ← Block, matrix (36 rows, totals), numbering with live examples, organizations view-as (Basra user sees 2 of 31).
 
 **Next step:** owner review, then module 9 «analytics».
+
+## 2026-10-30 — Module 9: analytics (9.1–9.7) — final module
+
+**Module / screen:** analytics — executive dashboard R0 (replaces the landing), reports hub and 17 reports R-01…R-17 with a reusable grid, global search R5, unified alerts feed R6.
+
+**Completed**
+- `reports.ts`: 17 report builders on one result shape (columns, rows, totals, note) plus filters per report; every report starts from the contracts the user may see (data authority and confidentiality) and derives lines, obligations, payments, calls and amendments from them, so totals are filtered before they are summed (BR-R-01). Values are per currency; the value reports offer «تحويل إلى الدينار» and state the rate used (BR-R-02). Dates follow the demo date (BR-R-03). CSV export (mock download with BOM) needs the Export permission and is audited (BR-R-04). The drift report shows zero until a balance is corrupted (BR-R-05).
+- Reports grid: filter bar, text search, sortable columns, totals row, notes, print; hub grouped (contracts, fulfillment, value, follow-up) gated by the Reports permission.
+- Dashboard: 10 KPI cards (active count/value per currency, expiring 30 d, awaiting approval, awaiting signature, overdue obligations, billing due 7 d, SLA within target, drift, alerts, expired awaiting renewal), status donut, type bars, expiring list, top-10 commitment utilisation and an alerts feed — SVG/CSS only.
+- Global search from the header (Enter): contracts (number, title, partner, reference), partners, executed documents and billing references, linked documents, clause library, templates, contract terms and obligations; contract-derived hits respect confidentiality and scope (BR-R-06). Alerts now also respect `canSee`.
+- All sidebar items are live (no «قريباً» left in the navigation).
+
+**Key design decisions**
+- Reports are computed views only; nothing new is stored. The saved-filter record from the spec is not built (filters reset when leaving a report).
+- Partners in search link to the partner value report because the contracts list has no partner filter in the URL.
+
+**Issues / deferred:** saved filters; a charting library was deliberately not used (brief).
+
+**Verification (actual):** `tsc -b` clean, `npm run build` ok. All eight suites pass: `npm run check` (integrity) and `check:agreements`, `check:amendments`, `check:finance`, `check:templates`, `check:service`, `check:settings`, `check:analytics`. `check:analytics`: all 17 reports build for all 11 users, Org-scoped user sees a subset that equals the list and dashboard figures, per-currency columns and a stated rate, demo-date dependence, CSV shape, export/report permissions, drift zero then one after injection, search finds contracts/partners/documents/clauses and hides a restricted contract from sales while legal finds it.
+**Final realism walk (browser, admin):** all 55 routes visited — dashboard, contracts (list, wizard, 5 cards of different profiles, print, compare), types, alerts, tasks, delegations, agreements (3), amendments, renewals, obligations, payments, templates (2), clauses, service (3), reports (hub + 17), search, settings (7), health: every screen renders data or a deliberate empty state; no JavaScript errors in the console (only old connection-refused lines from the dev server being stopped between sessions). Role-by-role walking and visual layout inspection were not done (screenshots time out in this environment).
+
+**Next step:** owner review of the complete mock; then polish items from the roadmap if wanted.

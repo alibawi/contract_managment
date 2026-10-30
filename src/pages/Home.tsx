@@ -1,4 +1,4 @@
-import { AlarmClock, BarChart3, BellRing, CalendarClock, ClipboardCheck, FileText, Files, FilePen, FileSignature, Handshake, ListChecks, Settings2, Wrench } from 'lucide-react'
+import { AlarmClock, BarChart3, BellRing, CalendarClock, ClipboardCheck, Coins, FileText, Files, FilePen, FileSignature, Gauge, Handshake, ListChecks, Settings2, ShieldAlert, Wrench } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { KPICard, ModuleScreensGrid } from '../components/display'
 import { PageHeader } from '../components/Layout'
@@ -6,8 +6,9 @@ import { Async } from '../components/states'
 import { Card } from '../components/ui'
 import { alertsForUser } from '../data/alerts'
 import { statusLabel, statusOrder } from '../data/contractMeta'
-import { daysTo, fmtDate, money } from '../data/format'
-import { canSee, partnerName, typeOf } from '../data/lifecycle'
+import { daysTo, fmtDate, money, num } from '../data/format'
+import { partnerName, typeOf } from '../data/lifecycle'
+import { dashboard } from '../data/reports'
 import { useStore } from '../data/store'
 import type { ContractStatus } from '../data/types'
 import { useApi } from '../lib/useApi'
@@ -40,61 +41,72 @@ function Donut({ data }: { data: { key: string; label: string; value: number; co
   )
 }
 
-/** Landing: module KPIs computed from the store (replaced by the executive dashboard in the analytics module). */
+/** R0 — executive dashboard: figures from every module, filtered by the user's data authority and confidentiality (BR-R-01). SVG/CSS charts only. */
 export default function Home() {
   const { db } = useStore()
   const api = useApi(() => {
-    const visible = db.contracts.filter((c) => canSee(db, c))
-    const by = (s: ContractStatus) => visible.filter((c) => c.status === s)
-    const active = by('Active')
-    const value = (cur: 'IQD' | 'USD') => active.filter((c) => c.currency === cur).reduce((s, c) => s + (c.contractValue ?? 0), 0)
-    const expiring = visible.filter((c) => ['Active', 'OnHold'].includes(c.status) && c.endDate && daysTo(c.endDate) >= 0 && daysTo(c.endDate) <= 30).sort((a, b) => a.endDate!.localeCompare(b.endDate!))
-    const types = db.contractTypes.map((t) => ({ name: t.name, n: visible.filter((c) => c.typeId === t.id).length })).filter((x) => x.n).sort((a, b) => b.n - a.n)
-    return { visible, by, active, iqd: value('IQD'), usd: value('USD'), expiring, types, alerts: alertsForUser(db).length }
+    const d = dashboard(db)
+    const types = db.contractTypes.map((t) => ({ name: t.name, n: d.vis.filter((c) => c.typeId === t.id).length })).filter((x) => x.n).sort((a, b) => b.n - a.n)
+    return { ...d, types, alerts: alertsForUser(db) }
   })
   return (
     <div>
-      <PageHeader crumbs={[{ label: 'لوحة المؤشرات' }]} title="إدارة العقود" />
+      <PageHeader crumbs={[{ label: 'لوحة المؤشرات' }]} title="لوحة المؤشرات التنفيذية" actions={<Link to="/reports" className="btn"><BarChart3 className="h-4 w-4" />كل التقارير</Link>} />
       <Async state={api}>
         {(d) => (
           <>
-            <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-              <KPICard label="عقود سارية" value={d.active.length} icon={FileSignature} tone="green" to="/contracts" hint={`${money(d.iqd, 'IQD')} + ${money(d.usd, 'USD')}`} />
-              <KPICard label="تنتهي خلال 30 يوماً" value={d.expiring.length} icon={AlarmClock} tone={d.expiring.length ? 'amber' : 'gray'} to="/contracts" />
-              <KPICard label="بانتظار الاعتماد" value={d.by('PendingApproval').length} icon={ClipboardCheck} tone="amber" to="/contracts" />
-              <KPICard label="بانتظار التوقيع" value={d.by('PendingSignature').length} icon={FilePen} tone="amber" to="/contracts" />
-              <KPICard label="منتهية تنتظر التجديد" value={d.by('Expired').length} icon={CalendarClock} tone={d.by('Expired').length ? 'red' : 'gray'} to="/contracts" />
-              <KPICard label="تنبيهات لك" value={d.alerts} icon={BellRing} tone={d.alerts ? 'red' : 'gray'} to="/alerts" />
+            <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+              <KPICard label="عقود سارية" value={d.active.length} icon={FileSignature} tone="green" to="/reports/active" hint={`${money(d.value.IQD, 'IQD')} + ${money(d.value.USD, 'USD')}`} />
+              <KPICard label="تنتهي خلال 30 يوماً" value={d.expiring.length} icon={AlarmClock} tone={d.expiring.length ? 'amber' : 'gray'} to="/reports/expiring" />
+              <KPICard label="بانتظار الاعتماد" value={d.approval} icon={ClipboardCheck} tone="amber" to="/reports/awaiting-approval" />
+              <KPICard label="بانتظار التوقيع" value={d.signature} icon={FilePen} tone="amber" to="/reports/awaiting-signature" />
+              <KPICard label="التزامات متأخرة" value={d.overdue} icon={ListChecks} tone={d.overdue ? 'red' : 'gray'} to="/obligations" />
+              <KPICard label="فوترة مستحقة (≤ 7 أيام)" value={d.billingDue} icon={Coins} tone={d.billingDue ? 'amber' : 'gray'} to="/payments" />
+              <KPICard label="ضمن مستوى الخدمة" value={d.slaPct === undefined ? '—' : `${d.slaPct.toFixed(0)}%`} icon={Wrench} tone={d.slaPct !== undefined && d.slaPct < 80 ? 'red' : 'green'} to="/service/sla" />
+              <KPICard label="انحراف التنفيذ" value={d.drift} icon={ShieldAlert} tone={d.drift ? 'red' : 'green'} to="/reports/drift" hint={d.drift ? 'يلزم إعادة احتساب' : 'سليم'} />
+              <KPICard label="تنبيهات لك" value={d.alerts.length} icon={BellRing} tone={d.alerts.length ? 'red' : 'gray'} to="/alerts" />
+              <KPICard label="عقود منتهية تنتظر التجديد" value={d.vis.filter((c) => c.status === 'Expired').length} icon={CalendarClock} tone="red" to="/renewals" />
             </div>
             <div className="mb-4 grid gap-4 lg:grid-cols-3">
-              <Card title="العقود حسب الحالة">
-                <Donut data={statusOrder.map((s) => ({ key: s, label: statusLabel[s], value: d.by(s).length, color: color[s] }))} />
-              </Card>
+              <Card title="العقود حسب الحالة"><Donut data={statusOrder.map((s) => ({ key: s, label: statusLabel[s], value: d.vis.filter((c) => c.status === s).length, color: color[s] }))} /></Card>
               <Card title="العقود حسب النوع">
                 <ul className="space-y-2 text-xs">
                   {d.types.map((t) => (
                     <li key={t.name}><div className="mb-0.5 flex justify-between"><span>{t.name}</span><span className="font-semibold tabular-nums">{t.n}</span></div>
-                      <div className="h-2 rounded-full bg-gray-100"><div className="h-2 rounded-full bg-navy" style={{ width: `${(t.n / d.types[0].n) * 100}%` }} /></div></li>
-                  ))}
+                      <div className="h-2 rounded-full bg-gray-100"><div className="h-2 rounded-full bg-navy" style={{ width: `${(t.n / d.types[0].n) * 100}%` }} /></div></li>))}
                 </ul>
               </Card>
-              <Card title="تنتهي قريباً" actions={<Link to="/contracts" className="text-xs text-navy underline">الكل</Link>}>
+              <Card title="تنتهي قريباً" actions={<Link to="/reports/expiring" className="text-xs text-navy underline">الكل</Link>}>
                 {d.expiring.length === 0 ? <div className="py-6 text-center text-sm text-gray-400">لا عقود تنتهي خلال 30 يوماً</div> : (
                   <ul className="divide-y divide-gray-100 text-sm">
                     {d.expiring.slice(0, 6).map((c) => (
                       <li key={c.id}><Link to={`/contracts/${c.id}`} className="flex items-center justify-between gap-2 py-2 hover:text-navy">
                         <span className="min-w-0"><span className="block truncate font-medium">{c.title}</span><span className="text-[11px] text-gray-500">{partnerName(db, c)} · {typeOf(db, c).name}</span></span>
                         <span className={`shrink-0 text-xs font-semibold ${daysTo(c.endDate!) <= 15 ? 'text-red-600' : 'text-amber-600'}`}>{daysTo(c.endDate!)} يوم<span className="block font-normal text-gray-400">{fmtDate(c.endDate)}</span></span>
-                      </Link></li>
-                    ))}
-                  </ul>
-                )}
+                      </Link></li>))}
+                  </ul>)}
               </Card>
             </div>
-          </>
-        )}
+            <div className="mb-4 grid gap-4 lg:grid-cols-2">
+              <Card title="أعلى استهلاك للالتزامات (أكثر 10)" actions={<Link to="/reports/remaining" className="text-xs text-navy underline">التفاصيل</Link>}>
+                {d.utilisation.length === 0 ? <div className="py-6 text-center text-sm text-gray-400">لا اتفاقيات</div> : (
+                  <ul className="space-y-2 text-xs">
+                    {d.utilisation.map(({ c, s }) => (
+                      <li key={c.id}><Link to={`/contracts/${c.id}`} className="mb-0.5 flex justify-between hover:text-navy"><span className="truncate">{c.title}</span><span className={`font-semibold tabular-nums ${s.pct >= 95 ? 'text-red-600' : s.pct >= 80 ? 'text-amber-600' : ''}`}>{num(s.pct, 0)}%</span></Link>
+                        <div className="h-2 rounded-full bg-gray-100"><div className={`h-2 rounded-full ${s.pct >= 95 ? 'bg-red-500' : s.pct >= 80 ? 'bg-amber-500' : 'bg-navy'}`} style={{ width: `${Math.min(100, s.pct)}%` }} /></div></li>))}
+                  </ul>)}
+              </Card>
+              <Card title="آخر التنبيهات" actions={<Link to="/alerts" className="text-xs text-navy underline">الكل</Link>}>
+                {d.alerts.length === 0 ? <div className="py-6 text-center text-sm text-gray-400">لا تنبيهات</div> : (
+                  <ul className="divide-y divide-gray-100 text-sm">
+                    {d.alerts.slice(0, 7).map((a) => (
+                      <li key={a.key}><Link to={`/contracts/${a.contractId}`} className="flex items-start gap-2 py-1.5 hover:text-navy"><span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${a.severity === 'danger' ? 'bg-red-500' : a.severity === 'warn' ? 'bg-amber-500' : 'bg-sky-500'}`} /><span><span className="block">{a.text}</span><span className="text-[11px] text-gray-400" dir="ltr">{a.contractNumber}</span></span></Link></li>))}
+                  </ul>)}
+              </Card>
+            </div>
+          </>)}
       </Async>
-      <Card title="وحدات النموذج التجريبي (تُفعَّل تباعاً)">
+      <Card title="وحدات النظام">
         <ModuleScreensGrid screens={[
           { to: '/contracts', title: 'العقود', hint: 'القائمة، البطاقة، الدورة، الأطراف والمرفقات، التنبيهات', icon: FileText },
           { to: '/tasks', title: 'الاعتماد والتوقيع', hint: 'مراحل Elsa، المهام، التفويض، التوقيع الإلكتروني', icon: ClipboardCheck },
@@ -104,7 +116,8 @@ export default function Home() {
           { to: '/templates', title: 'القوالب والطباعة', hint: 'القوالب، مكتبة البنود، معاينة الطباعة', icon: Files },
           { to: '/service', title: 'عقود الخدمة', hint: 'التغطية ومستوى الخدمة والاستهلاك', icon: Wrench },
           { to: '/settings', title: 'الإعدادات والصلاحيات', hint: 'إعدادات النظام ومصفوفة الصلاحيات والترقيم', icon: Settings2 },
-          { to: '/reports', title: 'التقارير', hint: 'لوحة المؤشرات التنفيذية والتقارير R-01…R-17', icon: BarChart3, soon: true },
+          { to: '/reports', title: 'التقارير', hint: 'التقارير R-01…R-17 والبحث الشامل', icon: BarChart3 },
+          { to: '/service/calls', title: 'محاكي بلاغات الخدمة', hint: 'تغطية ومهل SLA واستهلاك', icon: Gauge },
         ]} />
       </Card>
     </div>

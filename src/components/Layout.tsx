@@ -171,7 +171,7 @@ function RoleMenu() {
 
 function Topbar() {
   const nav = useNavigate()
-  const { can, toast } = useStore()
+  const { can } = useStore()
   return (
     <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-line bg-white px-4">
       <div className="flex items-center gap-2">
@@ -180,7 +180,7 @@ function Topbar() {
         )}
         <div className="relative hidden lg:block">
           <Search className="absolute start-2.5 top-2 h-4 w-4 text-gray-400" />
-          <input className="inp w-72 ps-8" placeholder="بحث في العقود والأطراف والمستندات..." onKeyDown={(e) => e.key === 'Enter' && toast('البحث الشامل يُفعَّل في وحدة التقارير')} />
+          <input className="inp w-72 ps-8" placeholder="بحث في العقود والأطراف والمستندات..." onKeyDown={(e) => { if (e.key === 'Enter' && e.currentTarget.value.trim()) { nav(`/search?q=${encodeURIComponent(e.currentTarget.value.trim())}`); e.currentTarget.value = '' } }} />
           <kbd className="absolute end-2 top-1.5 rounded border border-line bg-gray-50 px-1.5 text-[10px] text-gray-500" dir="ltr">⌘K</kbd>
         </div>
       </div>

@@ -28,6 +28,8 @@ import Matrix from './pages/settings/Matrix'
 import Numbering from './pages/settings/Numbering'
 import Organizations from './pages/settings/Organizations'
 import Settings from './pages/settings/Settings'
+import { ReportView, ReportsHub } from './pages/reports/Reports'
+import SearchPage from './pages/reports/Search'
 import Health from './pages/Health'
 import Delegations from './pages/workflow/Delegations'
 import ApprovalStages from './pages/workflow/ApprovalStages'
@@ -74,6 +76,9 @@ export default function App() {
         <Route path="/settings/organizations" element={<Organizations />} />
         <Route path="/settings/audit" element={<SettingsAudit />} />
         <Route path="/settings/demo" element={<Demo />} />
+        <Route path="/reports" element={<ReportsHub />} />
+        <Route path="/reports/:id" element={<ReportView key={pathname} />} />
+        <Route path="/search" element={<SearchPage />} />
         <Route path="/health" element={<Health />} />
         <Route path="*" element={<Home />} />
       </Routes>
