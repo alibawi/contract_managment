@@ -132,8 +132,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (rn) addAudit(d, 'demo', 'renewal', `إنشاء ${rn} عقد/عقود تجديد تلقائي`, date)
     }, `التاريخ التجريبي: ${date}`), [run])
 
+  const ctx = { db, version, run, reset, toast, can, user, setRole, setUser, setAsOf }
+  // dev-only handle for browser walkthroughs (absent from production builds)
+  if (import.meta.env.DEV) (window as unknown as { __mock?: unknown }).__mock = { setUser, setAsOf }
+
   return (
-    <StoreCtx.Provider value={{ db, version, run, reset, toast, can, user, setRole, setUser, setAsOf }}>
+    <StoreCtx.Provider value={ctx}>
       {children}
       {toastMsg && (
         <div className={`fixed bottom-5 left-5 z-50 max-w-md rounded-md px-4 py-2.5 text-sm text-white shadow-lg ${toastMsg.tone === 'ok' ? 'bg-navy' : 'bg-red-600'}`}>

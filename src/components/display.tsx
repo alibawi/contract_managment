@@ -7,7 +7,7 @@ import type { Tone } from '../data/format'
 const toneText: Record<Tone, string> = { gray: 'text-gray-900', green: 'text-emerald-700', amber: 'text-amber-700', red: 'text-red-700', blue: 'text-sky-700' }
 
 export function KPICard({ label, value, hint, tone = 'gray', icon: Icon, to }: {
-  label: string; value: ReactNode; hint?: string; tone?: Tone; icon?: LucideIcon; to?: string
+  label: string; value: ReactNode; hint?: ReactNode; tone?: Tone; icon?: LucideIcon; to?: string
 }) {
   const body = (
     <div className="card h-full px-4 py-3 transition hover:border-navy/40">

@@ -1,4 +1,5 @@
 import { Route, Routes, useLocation } from 'react-router-dom'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { AppLayout } from './components/Layout'
 import AlertsCenter from './pages/contracts/AlertsCenter'
 import ContractCard from './pages/contracts/ContractCard'
@@ -41,6 +42,7 @@ export default function App() {
   const { pathname } = useLocation()
   return (
     <AppLayout>
+      <ErrorBoundary key={pathname}>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/contracts" element={<ContractsList />} />
@@ -82,6 +84,7 @@ export default function App() {
         <Route path="/health" element={<Health />} />
         <Route path="*" element={<Home />} />
       </Routes>
+      </ErrorBoundary>
     </AppLayout>
   )
 }

@@ -56,7 +56,7 @@ export default function Home() {
         {(d) => (
           <>
             <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-              <KPICard label="عقود سارية" value={d.active.length} icon={FileSignature} tone="green" to="/reports/active" hint={`${money(d.value.IQD, 'IQD')} + ${money(d.value.USD, 'USD')}`} />
+              <KPICard label="عقود سارية" value={d.active.length} icon={FileSignature} tone="green" to="/reports/active" hint={<span className="flex flex-wrap gap-x-2"><span dir="ltr">{money(d.value.IQD, 'IQD')}</span><span dir="ltr">{money(d.value.USD, 'USD')}</span></span>} />
               <KPICard label="تنتهي خلال 30 يوماً" value={d.expiring.length} icon={AlarmClock} tone={d.expiring.length ? 'amber' : 'gray'} to="/reports/expiring" />
               <KPICard label="بانتظار الاعتماد" value={d.approval} icon={ClipboardCheck} tone="amber" to="/reports/awaiting-approval" />
               <KPICard label="بانتظار التوقيع" value={d.signature} icon={FilePen} tone="amber" to="/reports/awaiting-signature" />

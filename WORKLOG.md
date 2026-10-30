@@ -255,3 +255,17 @@
 **Final realism walk (browser, admin):** all 55 routes visited — dashboard, contracts (list, wizard, 5 cards of different profiles, print, compare), types, alerts, tasks, delegations, agreements (3), amendments, renewals, obligations, payments, templates (2), clauses, service (3), reports (hub + 17), search, settings (7), health: every screen renders data or a deliberate empty state; no JavaScript errors in the console (only old connection-refused lines from the dev server being stopped between sessions). Role-by-role walking and visual layout inspection were not done (screenshots time out in this environment).
 
 **Next step:** owner review of the complete mock; then polish items from the roadmap if wanted.
+
+## 2026-10-30 — Polish pass
+
+**Completed**
+- Error boundary around every screen (`ErrorBoundary`, reset per route): a crashing screen now shows the standard error state with retry instead of a blank page.
+- Role walk: 24 routes × 8 roles (requester, manager, legal, sales, procurement, finance, approver, Basra requester) plus admin earlier — no crashes and no JavaScript errors; the only short screens are the intended permission messages (reports for requesters, creating contracts for legal/finance/approvers, a contract outside the Basra user's organization).
+- Visual check at 1000×640 in the browser pane: dashboard, contract card, print preview and the obligations board render correctly in RTL. Fixed the dashboard «عقود سارية» hint where IQD/USD amounts mixed bidirectionally (each amount is now its own LTR run); `KPICard` hint accepts nodes.
+- Contracts list accepts `?partner=<id>`; the global-search partner hit opens the contracts of that partner.
+- README: status, all check commands, a six-step demo tour.
+- Dev-only `window.__mock` handle (user switch / demo date) in the store for browser walkthroughs; absent from production builds.
+
+**Verification (actual):** `tsc -b` clean, `npm run build` ok, `npm run check` and all seven `check:*` suites pass; partner filter returns 1 contract for the first customer.
+
+**Not done:** inspection of the narrow (phone) layout and the browser print dialog output; saved report filters.

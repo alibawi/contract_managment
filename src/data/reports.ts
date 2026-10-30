@@ -206,7 +206,7 @@ export function globalSearch(db: DB, q: string): Hit[] {
   const vis = visibleContracts(db), ids = new Set(vis.map((c) => c.id))
   const out: Hit[] = []
   vis.filter((c) => has(c.number, c.title, partnerName(db, c), c.externalReference)).forEach((c) => out.push({ group: 'العقود', id: c.id, title: `${c.number} — ${c.title}`, sub: `${partnerName(db, c)} · ${statusLabel[c.status]}`, to: `/contracts/${c.id}` }))
-  db.partners.filter((p) => has(p.name, p.code, p.contact, p.city)).forEach((p) => out.push({ group: 'الأطراف', id: p.id, title: p.name, sub: `${p.code} · ${p.kind === 'customer' ? 'عميل' : 'مورد'} · ${p.city}`, to: '/reports/value-partner' }))
+  db.partners.filter((p) => has(p.name, p.code, p.contact, p.city)).forEach((p) => out.push({ group: 'الأطراف', id: p.id, title: p.name, sub: `${p.code} · ${p.kind === 'customer' ? 'عميل' : 'مورد'} · ${p.city}`, to: `/contracts?partner=${p.id}` }))
   db.mockDocs.filter((d) => d.agreementId && ids.has(d.agreementId) && has(d.ref)).forEach((d) => out.push({ group: 'المستندات', id: d.id, title: d.ref, sub: `مستند منفّذ لاتفاقية ${db.contracts.find((c) => c.id === d.agreementId)?.number}`, to: `/contracts/${d.agreementId}` }))
   db.billingLog.filter((b) => ids.has(b.contractId) && has(b.ref)).forEach((b) => out.push({ group: 'المستندات', id: b.id, title: b.ref, sub: `فوترة — ${db.contracts.find((c) => c.id === b.contractId)?.number}`, to: `/contracts/${b.contractId}` }))
   db.links.filter((l) => ids.has(l.contractId) && has(l.docRef)).forEach((l) => out.push({ group: 'المستندات', id: l.id, title: l.docRef, sub: `مستند مرتبط — ${db.contracts.find((c) => c.id === l.contractId)?.number}`, to: `/contracts/${l.contractId}` }))

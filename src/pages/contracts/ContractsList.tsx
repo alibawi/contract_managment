@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { ConfidentialityBadge, ContractStatusBadge } from '../../components/contract'
 import { FilterSelect } from '../../components/inputs'
 import { ListView, type Column } from '../../components/ListView'
@@ -18,7 +19,8 @@ const tone = (n?: number) => (n === undefined ? 'text-gray-400' : n < 0 ? 'text-
 export default function ContractsList() {
   const { db, can } = useStore()
   const [tab, setTab] = useState<ContractStatus | 'all'>('all')
-  const [f, setF] = useState({ type: '', dir: '', profile: '', org: '', owner: '', partner: '', expiring: '' })
+  const [sp] = useSearchParams()
+  const [f, setF] = useState({ type: '', dir: '', profile: '', org: '', owner: '', partner: sp.get('partner') ?? '', expiring: '' })
   const set = (k: keyof typeof f) => (v: string) => setF((x) => ({ ...x, [k]: v }))
 
   const api = useApi(() => db.contracts.filter((c) => canSee(db, c)).map<Row>((c) => ({
