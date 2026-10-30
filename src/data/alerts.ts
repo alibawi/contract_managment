@@ -2,15 +2,16 @@
 import { today } from './asof'
 import { daysTo, fmtDate } from './format'
 import { graceEnd, noticeDeadline, typeOf } from './lifecycle'
+import { escalationDays, escalationLabel, isOpen, effStatus } from './obligations'
 import { daysSetting } from './settings'
 import type { Contract, DB } from './types'
 
-export type AlertRule = 'Expiry' | 'NoticeDeadline' | 'Expired' | 'ApprovalPending' | 'SignatureMissing' | 'Exceeded'
+export type AlertRule = 'Expiry' | 'NoticeDeadline' | 'Expired' | 'ApprovalPending' | 'SignatureMissing' | 'Exceeded' | 'ObligationDue' | 'GuaranteeExpiry'
 export interface Alert {
   key: string; contractId: string; contractNumber: string; rule: AlertRule; severity: 'info' | 'warn' | 'danger'; text: string; dueDate?: string; recipient: 'owner+managers'
 }
 export const ruleLabel: Record<AlertRule, string> = {
-  Expiry: 'قرب الانتهاء', NoticeDeadline: 'مهلة الإشعار', Expired: 'عقد منتهٍ', ApprovalPending: 'اعتماد معلّق', SignatureMissing: 'توقيع ناقص', Exceeded: 'تجاوز الالتزام',
+  Expiry: 'قرب الانتهاء', NoticeDeadline: 'مهلة الإشعار', Expired: 'عقد منتهٍ', ApprovalPending: 'اعتماد معلّق', SignatureMissing: 'توقيع ناقص', Exceeded: 'تجاوز الالتزام', ObligationDue: 'استحقاق التزام', GuaranteeExpiry: 'انتهاء ضمان',
 }
 
 const thresholds = (db: DB, c: Contract, which: 'expiry' | 'notice') => {
@@ -52,6 +53,21 @@ export function computeAlerts(db: DB): Alert[] {
     }
     const over = db.ledger.filter((e) => e.contractId === c.id && e.reason === 'Exceeded').length
     if (over) push(c, 'Exceeded', 'danger', `${over} قيد تجاوز في دفتر التنفيذ — مستندات حُفظت رغم تجاوز الحد، يلزم المراجعة`)
+  })
+  // BR-O-01: escalation at due -3d, 0, +1d, +7d (the latest point reached); BR-O-09: guarantees at 30 and 7 days
+  db.obligations.filter((o) => isOpen(o) && o.status !== 'Completed').forEach((o) => {
+    const c = db.contracts.find((x) => x.id === o.contractId)
+    if (!c || ['Cancelled', 'Closed'].includes(c.status)) return
+    const from = daysTo(today(), o.dueDate)
+    const hit = [...escalationDays].reverse().find((t) => from >= t)
+    if (hit === undefined || from > 14) return
+    push(c, 'ObligationDue', effStatus(o) === 'Overdue' ? 'danger' : 'warn', `${o.title}: ${escalationLabel(from)} (${fmtDate(o.dueDate)})`, o.dueDate, `|${o.id}|${hit}`)
+  })
+  db.guarantees.filter((g) => g.status === 'Active').forEach((g) => {
+    const c = db.contracts.find((x) => x.id === g.contractId)
+    const left = daysTo(g.expiryDate)
+    const hit = [30, 7].filter((t) => left >= 0 && left <= t).sort((a, b) => a - b)[0]
+    if (c && hit !== undefined) push(c, 'GuaranteeExpiry', left <= 7 ? 'danger' : 'warn', `ضمان ${g.issuer} ينتهي خلال ${left} يوماً (${fmtDate(g.expiryDate)})`, g.expiryDate, `|${g.id}|${hit}`)
   })
   const sev = { danger: 0, warn: 1, info: 2 }
   return out.sort((a, b) => sev[a.severity] - sev[b.severity] || (a.dueDate ?? '').localeCompare(b.dueDate ?? ''))

@@ -100,7 +100,7 @@ export default function Home() {
           { to: '/tasks', title: 'الاعتماد والتوقيع', hint: 'مراحل Elsa، المهام، التفويض، التوقيع الإلكتروني', icon: ClipboardCheck },
           { to: '/agreements', title: 'الاتفاقيات والتنفيذ', hint: 'بنود الالتزام ودفتر التنفيذ وتحويل العملات', icon: Handshake },
           { to: '/amendments', title: 'الملاحق والنسخ والتجديد', hint: 'ملاحق بتاريخ سريان، مقارنة النسخ، التجديد', icon: FilePen },
-          { to: '/obligations', title: 'الالتزامات والمالية', hint: 'المراحل والغرامات وجدول الدفعات والملخص المالي', icon: ListChecks, soon: true },
+          { to: '/obligations', title: 'الالتزامات والمالية', hint: 'المراحل والغرامات وجدول الدفعات والملخص المالي', icon: ListChecks },
           { to: '/templates', title: 'القوالب والطباعة', hint: 'القوالب، مكتبة البنود، معاينة الطباعة', icon: Files, soon: true },
           { to: '/service', title: 'عقود الخدمة', hint: 'التغطية ومستوى الخدمة والاستهلاك', icon: Wrench, soon: true },
           { to: '/settings', title: 'الإعدادات والصلاحيات', hint: 'إعدادات النظام ومصفوفة الصلاحيات والترقيم', icon: Settings2, soon: true },

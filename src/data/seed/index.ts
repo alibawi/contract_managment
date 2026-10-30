@@ -6,6 +6,7 @@ import { contractTypes, contractsSeed } from './contracts'
 import * as s from './shared'
 import { agreementsSeed } from './agreements'
 import { amendmentsSeed } from './amendments'
+import { financeSeed } from './finance'
 import { workflowSeed } from './workflow'
 
 /** Fresh demo database. Module seeds (contracts, agreements, ...) are merged here by each module step. */
@@ -54,9 +55,15 @@ export function seed(): DB {
     schedules: [],
     amendments: [],
     versions: [],
+    obligations: [],
+    occurrences: [],
+    paymentItems: [],
+    billingLog: [],
+    guarantees: [],
   }
   workflowSeed(db)
   agreementsSeed(db)
   amendmentsSeed(db)
+  financeSeed(db)
   return db
 }

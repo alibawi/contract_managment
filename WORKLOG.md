@@ -147,3 +147,25 @@
 **Verification (actual):** `tsc -b` clean, `npm run build` ok, `npm run check` → integrity OK. `npm run check:amendments` (same engine): value + quantity amendment → three-stage approval → apply → v1/v2 compare, ledger untouched, cut below consumed refused, second open amendment refused, stale refused, creator cannot approve, future-dated amendment applied by the demo date, expired contract renewed (lines 1..n, counters reset, one successor, predecessor closed as Renewed on activation), grace window, auto-renewal once, tamper detected — all pass. Browser: amendments and versions tabs of c-01, v1/v2 compare (3 differences), pending amendment detail (stage 2 of 3, buttons disabled for admin with the reason), renewals list with KPIs, editor with the counter floor error then a successful submit.
 
 **Next step:** owner review, then module 5 «obligations-finance».
+
+## 2026-10-30 — Module 5: obligations-finance (5.1–5.7)
+
+**Module / screen:** obligations-finance — obligations tab O1 + dialog O2, board O3 (kanban/list + KPIs), financial tab (summary cards and per-currency table O6, payment schedule O4 + item dialog O5, guarantees, billing records), `/payments` (cross-contract schedule and billing log O7).
+
+**Completed**
+- `obligations.ts`: overdue derived from the demo date (BR-O-01), acceptance by a different user (BR-O-02), recurring occurrences generated up to a week ahead, unique per date and idempotent (BR-O-03), acyclic dependencies and start/complete blocked by an unfinished dependency (BR-O-04), display-only penalties FixedPerDay / PercentPerDay / Fixed with cap (BR-O-05), termination cancels open obligations unless they survive it.
+- `payments.ts`: schedule check (percent ≤ 100, amount ≤ contract value), invoiced items frozen, mock billing creation (BR-O-07): agreement items naming a line post a real invoice/bill/order through the agreements engine so it lands in the ledger; other contracts and templates write a billing record only; Finance settlement simulated by «تسجيل دفعة»; financial summary with «غير متاح» when an invoice has no settlement yet (BR-O-08), retention held (BR-O-10).
+- Alerts: obligation escalation at due −3/0/+1/+7 days and guarantee expiry at 30/7 days (BR-O-09).
+- Seed: 26 obligations (accepted, in progress, overdue, rejected, recurring, cancelled by termination, surviving), occurrences, 20 payment items (10 already billed/settled through the billing engine, one left unsettled), 5 guarantees. `npm run check` also verifies obligations/payments/billing.
+
+**Key design decisions**
+- A recurring obligation is a series: its occurrences go overdue, the series itself never shows as overdue.
+- Payment items are Due by date (derived), not stored; billing requires the item to be Due and the contract Active/OnHold.
+- Retention held = paid × the retention item's percent while that item is not yet paid (display only).
+- KPI money is converted to dinars at the demo-date rate.
+
+**Issues / deferred:** occurrences are not counted in board KPIs; a billing document for an agreement line without an item (category lines) is recorded in the log only.
+
+**Verification (actual):** `tsc -b` clean, `npm run build` ok, `npm run check` → integrity OK. `npm run check:finance` (same engine): complete → accept with the separation rule, rejection and rework, dependency block and cycle refusal, overdue by advancing the date, penalties (percent capped, fixed per day, fixed once), recurrence idempotent, termination effect, billing a due item posts +2000 to the ledger line and cannot be repeated, frozen items, settlement unavailable → outstanding unknown, partial and full payment, template billing without document, schedule over 100% warns, alerts — all pass. Browser: board (7 KPIs, kanban columns, overdue column), c-17 obligations tab (dependency chain, penalty 2.5M), financial tab (cards, table, schedule with billing/payment buttons, guarantee, billing records).
+
+**Next step:** owner review, then module 6 «templates-print».

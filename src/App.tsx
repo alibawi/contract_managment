@@ -13,6 +13,8 @@ import AmendmentEditor from './pages/amendments/AmendmentEditor'
 import AmendmentsList from './pages/amendments/AmendmentsList'
 import Renewals from './pages/amendments/Renewals'
 import { VersionCompare } from './pages/amendments/Tabs'
+import ObligationsBoard from './pages/finance/Board'
+import Payments from './pages/finance/Payments'
 import Health from './pages/Health'
 import Delegations from './pages/workflow/Delegations'
 import ApprovalStages from './pages/workflow/ApprovalStages'
@@ -44,6 +46,8 @@ export default function App() {
         <Route path="/contracts/:id/versions/compare" element={<VersionCompare />} />
         <Route path="/amendments" element={<AmendmentsList />} />
         <Route path="/renewals" element={<Renewals />} />
+        <Route path="/obligations" element={<ObligationsBoard />} />
+        <Route path="/payments" element={<Payments />} />
         <Route path="/health" element={<Health />} />
         <Route path="*" element={<Home />} />
       </Routes>

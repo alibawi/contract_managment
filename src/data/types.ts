@@ -194,6 +194,34 @@ export interface ContractVersion {
   payload: VersionPayload; payloadHash: string; createdOn: string; createdBy: string
 }
 
+// ───────────── Module 5: obligations, payment schedule, billing, guarantees ─────────────
+export type ObligationKind = 'Deliverable' | 'Milestone' | 'Payment' | 'Reporting' | 'SLA' | 'Recurring' | 'Other'
+export type ObligationStatus = 'Planned' | 'InProgress' | 'Completed' | 'Accepted' | 'Rejected' | 'Waived' | 'Cancelled'
+export type PenaltyType = 'None' | 'FixedPerDay' | 'PercentPerDay' | 'Fixed'
+export interface Recurrence { freq: 'daily' | 'weekly' | 'monthly' | 'yearly'; count?: number; until?: string }
+export interface Obligation {
+  id: string; contractId: string; kind: ObligationKind; title: string; description: string; dueDate: string
+  responsibleEmployeeId?: string; responsibleDepartment?: string; quantity?: number; value?: number; status: ObligationStatus
+  completedOn?: string; completedBy?: string; acceptedOn?: string; acceptedBy?: string; acceptanceRequired: boolean; survivesTermination: boolean
+  penaltyType: PenaltyType; penaltyRate?: number; penaltyCap?: number; recurrence?: Recurrence; dependsOnId?: string; linkedPaymentItemId?: string
+  attachments: string[]; createdBy: string; createdAt: string
+}
+export interface ObligationOccurrence { id: string; obligationId: string; dueDate: string; status: 'Planned' | 'Completed' | 'Waived'; completedOn?: string }
+export type PaymentKind = 'Advance' | 'Milestone' | 'Periodic' | 'Retention' | 'Final'
+export type PaymentStatus = 'Planned' | 'Due' | 'Invoiced' | 'Paid' | 'Cancelled'
+export type BillingDocType = 'PurchaseOrder' | 'PurchaseBill' | 'PurchaseTemplate' | 'SaleOrder' | 'SaleInvoice' | 'SalesTemplate'
+export interface PaymentItem {
+  id: string; contractId: string; itemNo: number; kind: PaymentKind; dueDate: string; percent?: number; amount: number; currency: CurrencyCode
+  obligationId?: string; agreementLineNum?: number; status: PaymentStatus; billingDocType?: BillingDocType; billingId?: string
+  /** Undefined while the settlement from Finance is unknown. */
+  paidAmount?: number; paidOn?: string; notes: string
+}
+export interface BillingRecord {
+  id: string; contractId: string; paymentItemId: string; docType: BillingDocType; ref: string; date: string; amount: number; currency: CurrencyCode
+  template: boolean; ledgerDocId?: string; note: string; createdBy: string
+}
+export interface Guarantee { id: string; contractId: string; type: 'Performance' | 'Advance' | 'Retention'; amount: number; currency: CurrencyCode; issuer: string; expiryDate: string; status: 'Active' | 'Expired' | 'Released' }
+
 export interface DB {
   /** Current role and user (role switcher). */
   role: RoleId
@@ -242,4 +270,9 @@ export interface DB {
   schedules: DeliveryScheduleItem[]
   amendments: ContractAmendment[]
   versions: ContractVersion[]
+  obligations: Obligation[]
+  occurrences: ObligationOccurrence[]
+  paymentItems: PaymentItem[]
+  billingLog: BillingRecord[]
+  guarantees: Guarantee[]
 }

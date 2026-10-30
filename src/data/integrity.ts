@@ -1,6 +1,7 @@
 // Referential-integrity checks over the seed/DB. Used by scripts/integrity-check.ts (npm run check) and the /health screen.
 // Module steps append their own checks (ledger = balances, version continuity, ...).
 import { hashOf } from './amendments'
+import { wouldCycle } from './obligations'
 import { COUNTERS, hasDrift, signsOf } from './fulfillment'
 import type { DB } from './types'
 
@@ -25,7 +26,7 @@ export function checkFoundation(db: DB): string[] {
   if (!db.users.some((u) => u.id === db.userId && u.role === db.role)) errs.push('current user does not match current role')
   const roles = new Set(db.users.map((u) => u.role))
   Object.keys(db.rolePerms).forEach((r) => { if (!roles.has(r as never)) errs.push(`no user has role ${r}`) })
-  errs.push(...checkContracts(db), ...checkWorkflow(db), ...checkAgreements(db), ...checkAmendments(db))
+  errs.push(...checkContracts(db), ...checkWorkflow(db), ...checkAgreements(db), ...checkAmendments(db), ...checkFinance(db))
   return errs
 }
 
@@ -159,6 +160,49 @@ export function checkAmendments(db: DB): string[] {
     if (a.status === 'Applied' && !db.versions.some((v) => v.contractId === a.contractId && v.amendmentId === a.id && v.versionNo === a.appliedVersionNo)) errs.push(`amendment ${a.id}: applied without its version`)
     if (a.status === 'PendingApproval' && !db.approvalRequests.some((r) => r.subjectId === a.id && r.status === 'Pending')) errs.push(`amendment ${a.id}: pending without an open request`)
     if (a.status === 'Approved' && !db.approvalRequests.some((r) => r.subjectId === a.id && r.status === 'Approved')) errs.push(`amendment ${a.id}: approved without an approved request`)
+  })
+  return errs
+}
+
+/** Module 5: obligations, dependencies, occurrences, payment schedule and billing records. */
+export function checkFinance(db: DB): string[] {
+  const errs: string[] = []
+  const cs = new Map(db.contracts.map((c) => [c.id, c]))
+  const obl = new Map(db.obligations.map((o) => [o.id, o]))
+  const pay = new Map(db.paymentItems.map((p) => [p.id, p]))
+  if (obl.size !== db.obligations.length) errs.push('obligations: duplicate ids')
+  db.obligations.forEach((o) => {
+    if (!cs.has(o.contractId)) errs.push(`obligation ${o.id}: unknown contract`)
+    if (o.dependsOnId) {
+      const dep = obl.get(o.dependsOnId)
+      if (!dep || dep.contractId !== o.contractId) errs.push(`obligation ${o.id}: bad dependency`)
+      else if (wouldCycle(db, o.id, o.dependsOnId)) errs.push(`obligation ${o.id}: dependency cycle`)
+    }
+    if (o.linkedPaymentItemId && !pay.has(o.linkedPaymentItemId)) errs.push(`obligation ${o.id}: unknown payment item`)
+    if (o.status === 'Accepted' && !o.acceptedBy) errs.push(`obligation ${o.id}: accepted without acceptor`)
+    if (o.status === 'Accepted' && o.acceptanceRequired && o.acceptedBy === o.completedBy) errs.push(`obligation ${o.id}: completer accepted own work`)
+  })
+  const keys = new Set<string>()
+  db.occurrences.forEach((x) => {
+    const k = `${x.obligationId}|${x.dueDate}`
+    if (keys.has(k)) errs.push(`occurrence ${k}: duplicate`)
+    keys.add(k)
+    if (!obl.has(x.obligationId)) errs.push(`occurrence ${x.id}: unknown obligation`)
+  })
+  db.paymentItems.forEach((p) => {
+    if (!cs.has(p.contractId)) errs.push(`payment ${p.id}: unknown contract`)
+    if (p.obligationId && !obl.has(p.obligationId)) errs.push(`payment ${p.id}: unknown obligation`)
+    if (['Invoiced', 'Paid'].includes(p.status) && !db.billingLog.some((b) => b.paymentItemId === p.id)) errs.push(`payment ${p.id}: billed without a billing record`)
+  })
+  db.billingLog.forEach((b) => {
+    if (!pay.has(b.paymentItemId)) errs.push(`billing ${b.id}: unknown payment item`)
+    if (b.ledgerDocId && !db.mockDocs.some((d) => d.id === b.ledgerDocId)) errs.push(`billing ${b.id}: unknown ledger document`)
+  })
+  db.guarantees.forEach((g) => { if (!cs.has(g.contractId)) errs.push(`guarantee ${g.id}: unknown contract`) })
+  db.contracts.forEach((c) => {
+    const items = db.paymentItems.filter((p) => p.contractId === c.id && p.status !== 'Cancelled')
+    if (items.reduce((s, p) => s + (p.percent ?? 0), 0) > 100.0001) errs.push(`contract ${c.id}: payment percents exceed 100`)
+    if (c.status === 'Terminated') db.obligations.filter((o) => o.contractId === c.id && !o.survivesTermination && !['Cancelled', 'Accepted', 'Waived'].includes(o.status)).forEach((o) => errs.push(`obligation ${o.id}: open after termination`))
   })
   return errs
 }
