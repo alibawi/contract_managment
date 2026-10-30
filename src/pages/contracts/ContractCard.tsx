@@ -12,6 +12,8 @@ import { useStore } from '../../data/store'
 import { useApi } from '../../lib/useApi'
 import { ApprovalPanel } from '../workflow/ApprovalPanel'
 import { ESignPanel } from '../workflow/ESignPanel'
+import { AgreementLinesTab } from '../agreements/AgreementLines'
+import { AgreementDocs, FulfillmentTab } from '../agreements/Fulfillment'
 import { AttachmentsTab, GeneralTab, LinksTab, LinesTab, PartiesTab, SignaturesTab, SoonTab, TimelineTab } from './tabs'
 
 type Tab = 'general' | 'parties' | 'lines' | 'terms' | 'attachments' | 'signatures' | 'approvals' | 'amendments' | 'versions' | 'fulfillment' | 'links' | 'obligations' | 'financial' | 'service' | 'timeline'
@@ -53,16 +55,16 @@ export default function ContractCard() {
           switch (tab) {
             case 'general': return <GeneralTab c={c} />
             case 'parties': return <PartiesTab c={c} />
-            case 'lines': return <LinesTab c={c} />
+            case 'lines': return c.profile === 'Agreement' ? <AgreementLinesTab c={c} /> : <LinesTab c={c} />
             case 'attachments': return <AttachmentsTab c={c} />
             case 'signatures': return <div className="space-y-4"><ESignPanel c={c} /><SignaturesTab c={c} /></div>
             case 'approvals': return <ApprovalPanel c={c} />
-            case 'links': return <LinksTab c={c} />
+            case 'links': return <div className="space-y-4">{c.profile === 'Agreement' && <AgreementDocs c={c} />}<LinksTab c={c} /></div>
             case 'timeline': return <TimelineTab c={c} />
             case 'terms': return <SoonTab title="البنود القانونية" module="القوالب والطباعة" />
             case 'amendments': return <SoonTab title="الملاحق" module="الملاحق والنسخ" />
             case 'versions': return <SoonTab title="النسخ" module="الملاحق والنسخ" />
-            case 'fulfillment': return <SoonTab title="التنفيذ" module="الاتفاقيات والتنفيذ" />
+            case 'fulfillment': return <FulfillmentTab c={c} />
             case 'obligations': return <SoonTab title="الالتزامات" module="الالتزامات والمالية" />
             case 'financial': return <SoonTab title="الملخص المالي" module="الالتزامات والمالية" />
             case 'service': return <SoonTab title="الخدمة ومستوى الخدمة" module="عقود الخدمة" />

@@ -101,3 +101,26 @@
 **Verification (actual):** `tsc -b` clean, `npm run build` ok, `npm run check` → integrity OK. Browser: full 5-stage approval of a 60M IQD contract (last stage approved by delegate on behalf of GM, history shows «بالنيابة»), rejection path, e-sign send → sign each signer → Signed, contract c-19 auto-activated by system on demo date 2026-11-20 (v1, activatedBy system), delegations list shows expired/active/future states, 6 stage rules rendered, no console errors.
 
 **Next step:** owner review, then module 3 «agreements».
+
+## 2026-10-30 — Module 3: agreements (3.1–3.8)
+
+**Module / screen:** agreements — list A6, lines tab + editor A1/A2, fulfillment tab A3, linked documents A4, demo document simulator A5, resolution test A7, delivery schedules A8, module KPIs.
+
+**Completed**
+- `fulfillment.ts`: the engine. Counter mapping per document type (BR-A-01/02: order → release; delivery → fulfil; invoice → invoice; direct invoice with stock movement → all three once; returns restore per setting), contribution model with delta entries and revision guard (BR-A-03), basis-driven remaining (BR-A-04), validation by `EnforcementMode` (BR-A-05), `OnFulfillmentFailure` Rollback / KeepAndAlert with `Exceeded` entries and an alert (BR-A-06), any-currency conversion with ActivationRate / DocumentDateRate (BR-A-07), recalculate (BR-A-11), resolver (BR-A-09), schedule status (BR-A-12).
+- Seed: 66 mock documents across 11 agreements (cancelled, edited, returned, USD-on-IQD and IQD-on-USD cases) posted through the real engine ⇒ 104 ledger entries, balances, 14 schedule rows; line limits (min/max release, enforced cap, validity) layered over the module-1 lines. `npm run check` also verifies agreements (ledger = every source line's contribution, ledger sum = balance for every line).
+- Screens: list with KPIs and committed/released/fulfilled/invoiced bars; lines tab (Draft editable, item or category with sub-categories); fulfillment tab with ledger drill-down, recalculate and a demo «drift» button; documents tab; simulator with live preview, post/edit/cancel/reverse/unlink/delete/return and the five relevant settings inline; resolver with skipped-agreement reasons; schedule dialog.
+- Alerts: a new «تجاوز الالتزام» rule for contracts with `Exceeded` ledger entries.
+
+**Key design decisions**
+- Balances are a cache (`db.balances`) rebuilt from the ledger; the drift button proves the indicator and recalculate.
+- Seed has 104 entries, not the 120 in the spec — enough variety; count follows the documents.
+- `enforceMax` caps the total commitment; `minRelease/maxRelease` apply per released document; Warn never throws (checks become warnings), None skips all checks.
+- Document state lives on the document (all its lines), not per line; simulator documents are single-line, seed documents may have several.
+- Returns are created as return document + optional inventory movement; with `ReturnsRestoreCommitment` off they add no entries.
+
+**Issues / deferred:** amendments cannot yet reduce a line below its counters (BR-A-10, module 4); the real category-membership lookup is the placeholder item→category tree.
+
+**Verification (actual):** `tsc -b` clean, `npm run build` ok, `npm run check` → integrity OK. `npm run check:agreements` (new, same engine code): SO 10 → receipt 6 → bill 6 → return 2 (with stock) → order cancel, edit delta, USD document on IQD contract and IQD on USD under both rate sources, Warn / None / Block+Rollback / Block+KeepAndAlert, restore off, direct invoice with stock = 3 entries, drift + recalculate, resolver (specific and general) — all pass. Browser: list KPIs and 15 rows, c-01 lines / fulfillment / documents tabs, simulator preview (Warn warning), Block+Rollback refused (5 docs) then KeepAndAlert kept (6 docs, entry «تجاوز الحد»), resolver result, Draft line dialog, schedule dialog with Met / Late / Upcoming.
+
+**Next step:** owner review, then module 4 «amendments».
