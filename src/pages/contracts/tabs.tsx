@@ -220,7 +220,7 @@ export function SignaturesTab({ c }: { c: Contract }) {
       )}
       {!t.requiresSignature && <div className="border-b border-line bg-gray-50 px-4 py-2 text-xs text-gray-500">هذا النوع لا يتطلب توقيعاً.</div>}
       <DataTable rows={rows} columns={cols} emptyTitle="لا تواقيع مسجلة" />
-      <p className="border-t border-line px-4 py-2 text-xs text-gray-400">تُسجَّل هنا مستندات موقّعة تم الحصول عليها؛ الإرسال لمزوّد التوقيع الإلكتروني يأتي مع وحدة «الاعتماد والتوقيع».</p>
+      <p className="border-t border-line px-4 py-2 text-xs text-gray-400">تُسجَّل هنا التواقيع الورقية أو المستندات الموقّعة المرفوعة؛ التوقيع الإلكتروني عبر المزوّد في اللوحة أعلاه.</p>
       {dlg && <SignatureDialog contract={c} onClose={() => setDlg(false)} />}
     </Card>
   )
@@ -252,22 +252,6 @@ function SignatureDialog({ contract, onClose }: { contract: Contract; onClose: (
         </Field>
       </div>
     </Modal>
-  )
-}
-
-// ───────── approvals (stub until module 2) ─────────
-export function ApprovalsTab({ c }: { c: Contract }) {
-  const { db } = useStore()
-  const rows = db.history.filter((h) => h.contractId === c.id && ['PendingApproval', 'Approved'].includes(h.to) || (h.contractId === c.id && h.from === 'PendingApproval'))
-  const items: TimelineItem[] = rows.map((h) => ({
-    id: h.id, at: h.at, tone: h.to === 'Approved' ? 'green' : h.to === 'Draft' ? 'red' : 'amber',
-    title: h.to === 'PendingApproval' ? 'أُرسل للاعتماد' : h.to === 'Approved' ? 'اعتُمد' : 'رُفض وأُعيد إلى مسودة', detail: h.reason, by: userName(db, h.byUserId),
-  }))
-  return (
-    <Card title="الاعتماد">
-      <div className="mb-3 rounded-md bg-sky-50 px-3 py-2 text-xs text-sky-800">مراحل Elsa (3 أو 5 حسب المبلغ)، المهام والتفويض تُضاف في وحدة «الاعتماد والتوقيع». حالياً: اعتماد بخطوة واحدة ومنع المنشئ من اعتماد عقده.</div>
-      <Timeline items={items.sort((a, b) => b.at.localeCompare(a.at))} empty="لم يُرسل العقد للاعتماد بعد" />
-    </Card>
   )
 }
 

@@ -9,7 +9,6 @@ import { addDays, today } from '../data/asof'
 import { fmtDate } from '../data/format'
 import { roleLabel } from '../data/permissions'
 import { DATA_VERSION, useStore } from '../data/store'
-import type { RoleId } from '../data/types'
 import { contractNav } from '../lib/navigation'
 import { useClickAway } from '../lib/useClickAway'
 import { Confirm } from './ui'
@@ -121,7 +120,7 @@ function DemoDate() {
 }
 
 function RoleMenu() {
-  const { db, user, setRole, run, reset, toast } = useStore()
+  const { db, user, setUser, run, reset, toast } = useStore()
   const [open, setOpen] = useState(false)
   const [ask, setAsk] = useState(false)
   const initials = user.name.split(' ').slice(0, 2).map((w) => w[0]).join('')
@@ -141,13 +140,15 @@ function RoleMenu() {
       </button>
       {open && (
         <div className="absolute end-0 top-11 z-40 w-64 rounded-md border border-line bg-white py-1 shadow-lg">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-gray-400"><UserCog className="h-3.5 w-3.5" />تبديل الدور (يؤثر على الأزرار)</div>
-          {(Object.keys(roleLabel) as RoleId[]).map((r) => (
-            <button key={r} type="button" onClick={() => { setRole(r); setOpen(false) }}
-              className={`block w-full px-3 py-1.5 text-start text-sm hover:bg-gray-50 ${db.role === r ? 'font-semibold text-navy' : 'text-gray-700'}`}>
-              {roleLabel[r]}
-            </button>
-          ))}
+          <div className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-gray-400"><UserCog className="h-3.5 w-3.5" />العمل كمستخدم (يغيّر الدور والأزرار)</div>
+          <div className="max-h-72 overflow-y-auto">
+            {db.users.map((u) => (
+              <button key={u.id} type="button" onClick={() => { setUser(u.id); setOpen(false) }}
+                className={`block w-full px-3 py-1.5 text-start hover:bg-gray-50 ${db.userId === u.id ? 'bg-navy-50 font-semibold text-navy' : 'text-gray-700'}`}>
+                <span className="block text-sm">{u.name}</span><span className="text-[11px] text-gray-500">{roleLabel[u.role]} — {u.title}</span>
+              </button>
+            ))}
+          </div>
           <div className="my-1 border-t border-line" />
           <button type="button" onClick={() => run((d) => { d.simulateError = !d.simulateError }, db.simulateError ? 'تم إيقاف محاكاة الخطأ' : 'محاكاة خطأ الخادم مفعّلة — أعد تحميل الشاشة')}
             className="flex w-full items-center gap-1.5 px-3 py-1.5 text-start text-sm text-gray-700 hover:bg-gray-50">

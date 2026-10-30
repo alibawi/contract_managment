@@ -14,8 +14,8 @@ export const contractNav: NavItem[] = [
   { to: '/contracts', label: 'العقود', icon: FileText, section: 'العقود', module: 'contracts' },
   { to: '/contract-types', label: 'أنواع العقود', icon: Tags, module: 'contracts' },
   { to: '/alerts', label: 'التنبيهات', icon: BellRing, module: 'contracts' },
-  { to: '/tasks', label: 'مهامي (الاعتماد)', icon: ClipboardCheck, section: 'الاعتماد والتوقيع', soon: true, module: 'workflow' },
-  { to: '/delegations', label: 'تفويض الاعتماد', icon: UserCog, soon: true, module: 'workflow' },
+  { to: '/tasks', label: 'مهامي (الاعتماد)', icon: ClipboardCheck, section: 'الاعتماد والتوقيع', module: 'workflow' },
+  { to: '/delegations', label: 'تفويض الاعتماد', icon: UserCog, module: 'workflow' },
   { to: '/agreements', label: 'اتفاقيات المبيعات والمشتريات', icon: Handshake, section: 'الاتفاقيات', soon: true, module: 'agreements' },
   { to: '/agreements/simulator', label: 'محاكي المستندات', icon: Gauge, soon: true, module: 'agreements' },
   { to: '/agreements/resolve', label: 'اختبار مطابقة الاتفاقية', icon: ShieldCheck, soon: true, module: 'agreements' },
@@ -32,7 +32,7 @@ export const contractNav: NavItem[] = [
   { to: '/settings', label: 'إعدادات النظام', icon: Settings2, section: 'الإعدادات', soon: true, module: 'settings-access' },
   { to: '/settings/permissions', label: 'مصفوفة الصلاحيات', icon: Lock, soon: true, module: 'settings-access' },
   { to: '/settings/numbering', label: 'الترقيم', icon: FileClock, soon: true, module: 'settings-access' },
-  { to: '/settings/approval-stages', label: 'مراحل الاعتماد', icon: Landmark, soon: true, module: 'settings-access' },
+  { to: '/settings/approval-stages', label: 'مراحل الاعتماد', icon: Landmark, module: 'settings-access' },
   { to: '/health', label: 'فحص النظام', icon: Coins, section: 'النظام', module: 'foundation' },
 ]
 

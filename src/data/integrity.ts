@@ -23,7 +23,7 @@ export function checkFoundation(db: DB): string[] {
   if (!db.users.some((u) => u.id === db.userId && u.role === db.role)) errs.push('current user does not match current role')
   const roles = new Set(db.users.map((u) => u.role))
   Object.keys(db.rolePerms).forEach((r) => { if (!roles.has(r as never)) errs.push(`no user has role ${r}`) })
-  errs.push(...checkContracts(db))
+  errs.push(...checkContracts(db), ...checkWorkflow(db))
   return errs
 }
 
@@ -58,6 +58,39 @@ export function checkContracts(db: DB): string[] {
       const have = new Set(db.signatures.filter((s) => s.contractId === c.id).map((s) => s.role))
       t.requiredSignatureRoles.forEach((r) => { if (!have.has(r)) errs.push(`contract ${c.id}: missing signature ${r}`) })
     }
+  })
+  return errs
+}
+
+/** Module 2: approval requests, tasks, actions, delegations, signature requests. */
+export function checkWorkflow(db: DB): string[] {
+  const errs: string[] = []
+  const cs = new Map(db.contracts.map((c) => [c.id, c]))
+  db.stageRules.forEach((r) => r.stages.forEach((s, i) => { if (s.no !== i + 1) errs.push(`rule ${r.id}: stage numbers not contiguous`) }))
+  const open = new Map<string, number>()
+  db.approvalRequests.forEach((r) => {
+    const c = cs.get(r.contractId)
+    if (!c) { errs.push(`request ${r.id}: unknown contract`); return }
+    if (r.status === 'Pending') {
+      open.set(r.subjectId, (open.get(r.subjectId) ?? 0) + 1)
+      const t = db.tasks.find((x) => x.requestId === r.id && x.stageNo === r.currentStage && x.status === 'Open')
+      if (!t) errs.push(`request ${r.id}: no open task for stage ${r.currentStage}`)
+      else if (t.assignedUserId !== r.stages[r.currentStage - 1].userId) errs.push(`request ${r.id}: task assignee differs from stage user`)
+    }
+    if (r.status === 'Approved' && r.stages.some((s) => s.status !== 'approved')) errs.push(`request ${r.id}: approved with unapproved stages`)
+    const acts = db.approvalActions.filter((a) => a.requestId === r.id)
+    if (acts.length !== r.stages.filter((s) => s.status === 'approved' || s.status === 'rejected').length) errs.push(`request ${r.id}: actions count != decided stages`)
+    acts.forEach((a) => { if (a.approverUserId === c.createdBy) errs.push(`request ${r.id}: creator approved own contract (stage ${a.stageNo})`) })
+  })
+  open.forEach((n, id) => { if (n > 1) errs.push(`subject ${id}: ${n} open requests`) })
+  db.contracts.forEach((c) => {
+    if (c.status === 'PendingApproval' && !db.approvalRequests.some((r) => r.subjectId === c.id && r.subjectType === 'Contract' && r.status === 'Pending')) errs.push(`contract ${c.id}: PendingApproval without an open request`)
+  })
+  const users = new Set(db.users.map((u) => u.id))
+  db.delegations.forEach((d) => { if (!users.has(d.fromUserId) || !users.has(d.toUserId)) errs.push(`delegation ${d.id}: unknown user`); if (d.toDate < d.fromDate) errs.push(`delegation ${d.id}: dates reversed`) })
+  db.signatureRequests.forEach((r) => {
+    if (!cs.has(r.contractId)) errs.push(`signature request ${r.id}: unknown contract`)
+    if (r.status === 'Signed' && r.signers.some((s) => s.status !== 'Signed')) errs.push(`signature request ${r.id}: Signed with pending signers`)
   })
   return errs
 }

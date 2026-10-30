@@ -8,7 +8,7 @@ import type { AppUser, DB, Perm, RoleId } from './types'
 
 const KEY = 'enki-contracts-mock'
 /** Bump whenever the data model or seed changes — stored data with another version is discarded and reseeded. */
-export const DATA_VERSION = 3
+export const DATA_VERSION = 5
 
 type Toast = { msg: string; tone: 'ok' | 'err' }
 
@@ -23,6 +23,8 @@ interface Ctx {
   can: (p: Perm) => boolean
   user: AppUser
   setRole: (role: RoleId) => void
+  /** Acts as a specific user (role follows the user). */
+  setUser: (userId: string) => void
   setAsOf: (date: string) => void
 }
 
@@ -103,6 +105,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }),
     [run],
   )
+  const setUser = useCallback(
+    (userId: string) => run((d) => {
+      const u = d.users.find((x) => x.id === userId)
+      if (!u) return 'مستخدم غير معروف'
+      d.userId = u.id; d.role = u.role
+    }),
+    [run],
+  )
   const setAsOf = useCallback((date: string) => run((d) => {
       d.asOf = date
       addAudit(d, 'demo', 'asOf', 'تغيير التاريخ التجريبي', date)
@@ -111,7 +121,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }, `التاريخ التجريبي: ${date}`), [run])
 
   return (
-    <StoreCtx.Provider value={{ db, version, run, reset, toast, can, user, setRole, setAsOf }}>
+    <StoreCtx.Provider value={{ db, version, run, reset, toast, can, user, setRole, setUser, setAsOf }}>
       {children}
       {toastMsg && (
         <div className={`fixed bottom-5 left-5 z-50 max-w-md rounded-md px-4 py-2.5 text-sm text-white shadow-lg ${toastMsg.tone === 'ok' ? 'bg-navy' : 'bg-red-600'}`}>

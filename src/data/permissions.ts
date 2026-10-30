@@ -51,7 +51,7 @@ export const defaultRolePerms: Record<RoleId, Perm[]> = {
   requester: [...viewer, ...P('Contracts.Create', 'Contracts.Edit', 'Contracts.Delete', 'Contracts.Submit', 'Contracts.Cancel', 'Attachments.Upload', 'Obligations.Manage')],
   approver: [...viewer, ...P('Contracts.Approve', 'Contracts.Reject', 'ApprovalDelegations.Manage', 'Reports.View')],
   manager: [...viewer, ...P('Contracts.Create', 'Contracts.Edit', 'Contracts.Submit', 'Contracts.Activate', 'Contracts.Suspend', 'Contracts.Terminate', 'Contracts.Cancel',
-    'Contracts.Amend', 'Contracts.Renew', 'Contracts.Export', 'Attachments.Upload', 'Attachments.Delete', 'Fulfillment.Recalculate', 'Obligations.Manage', 'Obligations.Accept',
+    'Contracts.Approve', 'Contracts.Reject', 'Contracts.Amend', 'Contracts.Renew', 'Contracts.Export', 'Attachments.Upload', 'Attachments.Delete', 'Fulfillment.Recalculate', 'Obligations.Manage', 'Obligations.Accept',
     'Templates.Manage', 'ContractTypes.Manage', 'Reports.View', 'ApprovalDelegations.Manage')],
   legal: [...viewer, ...P('Contracts.Approve', 'Contracts.Reject', 'Contracts.ViewConfidential', 'Contracts.Amend', 'Clauses.Manage', 'Templates.Manage', 'Obligations.Accept', 'Reports.View')],
   sales: [...viewer, ...P('Contracts.Create', 'Contracts.Edit', 'Contracts.Submit', 'Attachments.Upload', 'Obligations.Complete', 'Reports.View')],

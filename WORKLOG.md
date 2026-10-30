@@ -78,3 +78,26 @@
 **Next step:** owner review checklist, then module 2 «workflow».
 
 ---
+
+## 2026-10-30 — Module 2: workflow (2.1–2.7)
+
+**Module / screen:** workflow — approval stage engine and timeline in the contract card (W1), tasks inbox (W2), delegations (W3), e-signature simulation (W4), approval stage rules preview (W5).
+
+**Completed**
+- `approval.ts`: stage rules selected by subject (contract / amendment / termination), type, organization and value in IQD (most specific wins); sequential stages snapshotted per request; one task per open stage; `eligibility()` (stage user or active delegation, creator cannot approve unless `Approval.AllowCreatorApproval`, legal-review stages need ViewConfidential); `decide()` returns next/approved/rejected.
+- Seed rules: ≤25M (3 stages), 25–250M (5), >250M (5 with legal review), amendments (2/3 stages), termination (2); three delegations (active, expired, future).
+- `lifecycle.ts`: submit/approve/reject go through the engine; signed contracts auto-activate when the effective date arrives.
+- `esign.ts` + ESignPanel: fake provider, request Sent → PartiallySigned → Signed/Declined/Expired; on Signed creates provider signatures and a signed attachment.
+- Screens: ApprovalPanel with stage timeline and decision dialog, tasks inbox, delegations (create/revoke), approval stages (read-only), user switcher in the header.
+- `npm run check` now also verifies workflow (one open stage, rule/stage FKs, delegation dates).
+
+**Key design decisions**
+- Elsa is only simulated; real rules are designed in the Elsa workflow designer (decision 1). Value thresholds are illustrative.
+- Manager role received Approve/Reject so the demo user can act on stages.
+- `DATA_VERSION` bumped to 5 (reseeds localStorage).
+
+**Issues / deferred:** stage-rule editing arrives in settings-access (module 8); Tasks KPIs, delegation dialog and c-06 pending flow were not browser-verified visually.
+
+**Verification (actual):** `tsc -b` clean, `npm run build` ok, `npm run check` → integrity OK. Browser: full 5-stage approval of a 60M IQD contract (last stage approved by delegate on behalf of GM, history shows «بالنيابة»), rejection path, e-sign send → sign each signer → Signed, contract c-19 auto-activated by system on demo date 2026-11-20 (v1, activatedBy system), delegations list shows expired/active/future states, 6 stage rules rendered, no console errors.
+
+**Next step:** owner review, then module 3 «agreements».

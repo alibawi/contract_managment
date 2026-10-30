@@ -106,6 +106,40 @@ export interface ContractAttachmentRow {
   fileName: string; size: number; contentType: string; uploadedBy: string; uploadedAt: string; version: number
 }
 
+// ───────────── Module 2: workflow (Elsa approval simulation, tasks, delegation, e-signature) ─────────────
+export type SubjectType = 'Contract' | 'Amendment' | 'Termination'
+export interface ApprovalStageDef { no: number; label: string; userId: string; isLegalReview?: boolean }
+export interface ApprovalStageRule {
+  id: string; name: string; subjectType: SubjectType; typeId?: string; organizationId?: string
+  /** Contract value converted to IQD. */
+  minValueIQD: number; maxValueIQD?: number; stages: ApprovalStageDef[]; isActive: boolean
+}
+export type StageStatus = 'waiting' | 'open' | 'approved' | 'rejected'
+export interface ApprovalRequest {
+  id: string; subjectType: SubjectType; subjectId: string; contractId: string; ruleId: string; ruleName: string
+  /** Snapshot of the stages at submission (later rule edits do not change a pending request). */
+  stages: (ApprovalStageDef & { status: StageStatus })[]
+  workflowInstanceId: string; status: 'Pending' | 'Approved' | 'Rejected' | 'Cancelled'; currentStage: number
+  valueIQD: number; submittedBy: string; submittedAt: string; completedAt?: string
+}
+export interface ApprovalAction {
+  id: string; requestId: string; stageNo: number; approverUserId: string; onBehalfOfUserId?: string
+  decision: 'Approved' | 'Rejected'; comment: string; taskId: string; decidedAt: string
+}
+export interface TaskItem {
+  id: string; requestId: string; contractId: string; subjectType: SubjectType; stageNo: number; assignedUserId: string
+  status: 'Open' | 'Completed' | 'Cancelled'; result: 'Pending' | 'Approved' | 'Rejected'; title: string; createdAt: string; completedAt?: string
+}
+export interface ApprovalDelegation {
+  id: string; fromUserId: string; toUserId: string; fromDate: string; toDate: string
+  scopeType: 'All' | 'ContractType' | 'Organization'; scopeId?: string; reason: string; isActive: boolean
+}
+export type SignatureRequestStatus = 'Draft' | 'Sent' | 'PartiallySigned' | 'Signed' | 'Declined' | 'Expired'
+export interface SignatureSigner { id: string; role: 'Counterparty' | 'Company'; name: string; title: string; partyId?: string; status: 'Pending' | 'Signed' | 'Declined'; signedOn?: string }
+export interface SignatureRequest {
+  id: string; contractId: string; provider: string; status: SignatureRequestStatus; signers: SignatureSigner[]; externalId: string; sentAt: string; sentBy: string
+}
+
 export interface DB {
   /** Current role and user (role switcher). */
   role: RoleId
@@ -142,4 +176,10 @@ export interface DB {
   alertsSeen: string[]
   /** Per-type sequence counters for contract numbers. */
   numbering: Record<string, number>
+  stageRules: ApprovalStageRule[]
+  approvalRequests: ApprovalRequest[]
+  approvalActions: ApprovalAction[]
+  tasks: TaskItem[]
+  delegations: ApprovalDelegation[]
+  signatureRequests: SignatureRequest[]
 }

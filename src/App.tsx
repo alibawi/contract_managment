@@ -6,6 +6,9 @@ import ContractTypes from './pages/contracts/ContractTypes'
 import ContractWizard from './pages/contracts/ContractWizard'
 import ContractsList from './pages/contracts/ContractsList'
 import Health from './pages/Health'
+import Delegations from './pages/workflow/Delegations'
+import ApprovalStages from './pages/workflow/ApprovalStages'
+import Tasks from './pages/workflow/Tasks'
 import Home from './pages/Home'
 
 export default function App() {
@@ -21,6 +24,9 @@ export default function App() {
         <Route path="/contracts/:id/edit" element={<ContractWizard key={pathname} />} />
         <Route path="/contract-types" element={<ContractTypes />} />
         <Route path="/alerts" element={<AlertsCenter />} />
+        <Route path="/tasks" element={<Tasks />} />
+        <Route path="/delegations" element={<Delegations />} />
+        <Route path="/settings/approval-stages" element={<ApprovalStages />} />
         <Route path="/health" element={<Health />} />
         <Route path="*" element={<Home />} />
       </Routes>

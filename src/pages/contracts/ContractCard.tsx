@@ -10,7 +10,9 @@ import { canSee, noticeDeadline, partnerName, typeOf, userName } from '../../dat
 import { getSetting } from '../../data/settings'
 import { useStore } from '../../data/store'
 import { useApi } from '../../lib/useApi'
-import { ApprovalsTab, AttachmentsTab, GeneralTab, LinksTab, LinesTab, PartiesTab, SignaturesTab, SoonTab, TimelineTab } from './tabs'
+import { ApprovalPanel } from '../workflow/ApprovalPanel'
+import { ESignPanel } from '../workflow/ESignPanel'
+import { AttachmentsTab, GeneralTab, LinksTab, LinesTab, PartiesTab, SignaturesTab, SoonTab, TimelineTab } from './tabs'
 
 type Tab = 'general' | 'parties' | 'lines' | 'terms' | 'attachments' | 'signatures' | 'approvals' | 'amendments' | 'versions' | 'fulfillment' | 'links' | 'obligations' | 'financial' | 'service' | 'timeline'
 
@@ -53,8 +55,8 @@ export default function ContractCard() {
             case 'parties': return <PartiesTab c={c} />
             case 'lines': return <LinesTab c={c} />
             case 'attachments': return <AttachmentsTab c={c} />
-            case 'signatures': return <SignaturesTab c={c} />
-            case 'approvals': return <ApprovalsTab c={c} />
+            case 'signatures': return <div className="space-y-4"><ESignPanel c={c} /><SignaturesTab c={c} /></div>
+            case 'approvals': return <ApprovalPanel c={c} />
             case 'links': return <LinksTab c={c} />
             case 'timeline': return <TimelineTab c={c} />
             case 'terms': return <SoonTab title="البنود القانونية" module="القوالب والطباعة" />

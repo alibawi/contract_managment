@@ -4,11 +4,12 @@ import { defaultSettings } from '../settings'
 import type { DB } from '../types'
 import { contractTypes, contractsSeed } from './contracts'
 import * as s from './shared'
+import { workflowSeed } from './workflow'
 
 /** Fresh demo database. Module seeds (contracts, agreements, ...) are merged here by each module step. */
 export function seed(): DB {
   const cs = contractsSeed()
-  return {
+  const db: DB = {
     role: 'admin',
     userId: 'u-adm',
     asOf: DEFAULT_TODAY,
@@ -39,5 +40,13 @@ export function seed(): DB {
     attachments: cs.attachments,
     alertsSeen: [],
     numbering: cs.numbering,
+    stageRules: [],
+    approvalRequests: [],
+    approvalActions: [],
+    tasks: [],
+    delegations: [],
+    signatureRequests: [],
   }
+  workflowSeed(db)
+  return db
 }

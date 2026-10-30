@@ -97,7 +97,7 @@ export default function Home() {
       <Card title="وحدات النموذج التجريبي (تُفعَّل تباعاً)">
         <ModuleScreensGrid screens={[
           { to: '/contracts', title: 'العقود', hint: 'القائمة، البطاقة، الدورة، الأطراف والمرفقات، التنبيهات', icon: FileText },
-          { to: '/tasks', title: 'الاعتماد والتوقيع', hint: 'مراحل Elsa، المهام، التفويض، التوقيع الإلكتروني', icon: ClipboardCheck, soon: true },
+          { to: '/tasks', title: 'الاعتماد والتوقيع', hint: 'مراحل Elsa، المهام، التفويض، التوقيع الإلكتروني', icon: ClipboardCheck },
           { to: '/agreements', title: 'الاتفاقيات والتنفيذ', hint: 'بنود الالتزام ودفتر التنفيذ وتحويل العملات', icon: Handshake, soon: true },
           { to: '/amendments', title: 'الملاحق والنسخ والتجديد', hint: 'ملاحق بتاريخ سريان، مقارنة النسخ، التجديد', icon: FilePen, soon: true },
           { to: '/obligations', title: 'الالتزامات والمالية', hint: 'المراحل والغرامات وجدول الدفعات والملخص المالي', icon: ListChecks, soon: true },

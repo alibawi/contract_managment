@@ -1,6 +1,7 @@
 // Contract state machine and business rules BR-C-01…15 (plan doc 03 T1–T15, doc 02 §2.1–2.2).
 // Module 2 replaces the approval stub (submit/approve/reject) with the Elsa stage engine; everything else stays.
 import { addDays, today } from './asof'
+import { decide, eligibility, openRequest, startApproval } from './approval'
 import { rateOn } from './currency'
 import { nowStamp, uid } from './format'
 import { can as canRole } from './permissions'
@@ -78,7 +79,6 @@ export function allowedActions(db: DB, c: Contract): ActionDef[] {
   const out: ActionDef[] = []
   const can = (p: Perm) => canRole(db.rolePerms, db.role, p)
   const add = (a: ActionDef) => { if (can(a.perm)) out.push(a) }
-  const creatorBlock = c.createdBy === db.userId && !getSetting<boolean>(db, 'Approval.AllowCreatorApproval') ? 'لا يجوز لمنشئ العقد اعتماده (فصل المهام)' : undefined
   const sigMissing = missingSignatureRoles(db, c)
   const graceOver = c.status === 'Expired' && graceEnd(db, c) && today() > graceEnd(db, c)!
 
@@ -90,8 +90,12 @@ export function allowedActions(db: DB, c: Contract): ActionDef[] {
       if (!db.history.some((h) => h.contractId === c.id && h.from) && !db.links.some((l) => l.contractId === c.id)) add({ id: 'delete', label: 'حذف المسودة', perm: 'Contracts.Delete', ask: 'confirm', danger: true })
       break
     case 'PendingApproval':
-      add({ id: 'approve', label: 'اعتماد', perm: 'Contracts.Approve', primary: true, ask: 'reason', blocked: creatorBlock })
-      add({ id: 'reject', label: 'رفض', perm: 'Contracts.Reject', ask: 'reason', reasonRequired: true, danger: true })
+      {
+        const req = openRequest(db, 'Contract', c.id)
+        const el = eligibility(db, req, db.userId)
+        add({ id: 'approve', label: req ? `اعتماد (المرحلة ${req.currentStage} من ${req.stages.length})` : 'اعتماد', perm: 'Contracts.Approve', primary: el.ok, ask: 'reason', blocked: el.ok ? undefined : el.reason })
+        add({ id: 'reject', label: 'رفض', perm: 'Contracts.Reject', ask: 'reason', reasonRequired: true, danger: true, blocked: el.ok ? undefined : el.reason })
+      }
       break
     case 'Approved':
     case 'PendingSignature':
@@ -125,7 +129,7 @@ export function allowedActions(db: DB, c: Contract): ActionDef[] {
   return out
 }
 
-const record = (d: DB, c: Contract, to: ContractStatus, reason?: string) => {
+export const record = (d: DB, c: Contract, to: ContractStatus, reason?: string) => {
   d.history.push({ id: uid('h'), contractId: c.id, from: c.status, to, byUserId: d.userId, at: nowStamp(), reason })
   d.audit.push({ id: uid('aud'), at: nowStamp(), userId: d.userId, entity: 'contract', entityId: c.id, action: `status:${c.status}->${to}`, detail: reason ?? '' })
   c.status = to
@@ -146,11 +150,29 @@ export function perform(d: DB, id: string, action: ActionId, p: { reason?: strin
       const errs = validateSubmit(d, c)
       if (errs.length) return errs.join(' — ')
       if (!t.requiresApproval) { record(d, c, 'PendingApproval', 'بدون مسار اعتماد'); record(d, c, 'Approved', 'النوع لا يتطلب اعتماداً'); return null }
+      const started = startApproval(d, 'Contract', c.id, c)
+      if (typeof started === 'string') return started
       record(d, c, 'PendingApproval', p.reason)
       return null
     }
-    case 'approve': record(d, c, 'Approved', p.reason); return null
-    case 'reject': record(d, c, 'Draft', p.reason); return null
+    case 'approve': {
+      const req = openRequest(d, 'Contract', c.id)
+      if (!req) return 'لا يوجد طلب اعتماد مفتوح'
+      const stageNo = req.currentStage
+      const r = decide(d, req.id, 'Approved', p.reason ?? '')
+      if ('error' in r) return r.error
+      if (r.outcome === 'approved') record(d, c, 'Approved', 'اكتملت مراحل الاعتماد')
+      else d.audit.push({ id: uid('aud'), at: nowStamp(), userId: d.userId, entity: 'contract', entityId: c.id, action: 'approval:stage', detail: `اعتُمدت المرحلة ${stageNo} — الآن المرحلة ${r.request.currentStage}` })
+      return null
+    }
+    case 'reject': {
+      const req = openRequest(d, 'Contract', c.id)
+      if (!req) return 'لا يوجد طلب اعتماد مفتوح'
+      const r = decide(d, req.id, 'Rejected', p.reason ?? '')
+      if ('error' in r) return r.error
+      record(d, c, 'Draft', `رُفض في المرحلة ${req.currentStage}: ${p.reason}`)
+      return null
+    }
     case 'sendForSignature': record(d, c, 'PendingSignature'); return null
     case 'reopen': record(d, c, 'Draft', p.reason); return null
     case 'activate': {
