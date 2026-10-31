@@ -57,7 +57,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                       {!collapsed && <><span className="flex-1">{label}</span><span className="rounded bg-gray-100 px-1.5 text-[10px] text-gray-400">قريباً</span></>}
                     </div>
                   ) : (
-                    <NavLink to={to} end={to === '/'} title={label}
+                    <NavLink to={to} end={to === '/' || to === '/reports' || to === '/service' || to === '/agreements'} title={label}
                       className={({ isActive }) => `flex items-center gap-2 rounded-md py-1.5 text-[13px] ${collapsed ? 'justify-center px-2' : 'pe-2 ps-7'} ${isActive ? 'bg-white font-semibold text-navy shadow-sm' : 'text-gray-600 hover:text-navy'}`}>
                       <Icon className="h-4 w-4 shrink-0" />
                       {!collapsed && label}

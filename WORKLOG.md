@@ -274,3 +274,6 @@
 
 **Completed:** the print page is now a print centre with 7 documents per contract (picker shows only those that apply): contract, contract summary, approval record, fulfillment statement (agreements), obligations and payments statement, amendment, service statement. Each has its own mock design template code; printing logs which document. Entry links added on the fulfillment, financial, service, approval and amendment screens. `check:templates` extended (document set per contract kind, print log).
 **Verification:** tsc and build ok, check:templates passes; browser: all 9 combinations tried on c-01 and c-16 render a sheet with tables. Not run again after this change: the other check suites; no visual screenshot of the new statements.
+
+## 2026-10-31 — Reports in the sidebar
+Each of the 17 reports is now its own menu item under «التقارير» (grouped: العقود، التنفيذ، القيمة، المتابعة) with an «كل التقارير» entry first; generated from the report registry so new reports appear automatically. Permission «التقارير» still hides the whole section. Verified: tsc, build, 18 report links present in the sidebar DOM (labels not inspected visually: the pane is narrow so the sidebar was collapsed).

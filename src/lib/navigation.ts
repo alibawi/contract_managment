@@ -1,7 +1,8 @@
 import {
-  AlarmClock, Building2, History, SlidersHorizontal, BarChart3, BellRing, CalendarClock, ClipboardCheck, Coins, FileClock, FilePen, FileSignature, FileText, Files, Gauge, Handshake,
+  AlarmClock, Building2, FileBarChart, History, SlidersHorizontal, BarChart3, BellRing, CalendarClock, ClipboardCheck, Coins, FileClock, FilePen, FileSignature, FileText, Files, Gauge, Handshake,
   Landmark, LayoutDashboard, ListChecks, Lock, Printer, Receipt, ScrollText, Settings2, ShieldCheck, Stethoscope, Tags, UserCog, Wrench, type LucideIcon,
 } from 'lucide-react'
+import { reports } from '../data/reports'
 
 export interface NavItem { to: string; label: string; icon: LucideIcon; section?: string; soon?: boolean; module: string; feature?: 'Obligations' | 'Templates' | 'Service' }
 
@@ -28,7 +29,9 @@ export const contractNav: NavItem[] = [
   { to: '/service', label: 'عقود الخدمة', icon: Wrench, section: 'الخدمة', feature: 'Service', module: 'service' },
   { to: '/service/calls', label: 'مكالمات الخدمة (محاكاة)', icon: Stethoscope, feature: 'Service', module: 'service' },
   { to: '/service/sla', label: 'تقرير مستوى الخدمة', icon: AlarmClock, feature: 'Service', module: 'service' },
-  { to: '/reports', label: 'التقارير', icon: BarChart3, section: 'التقارير', module: 'analytics' },
+  { to: '/reports', label: 'كل التقارير', icon: BarChart3, section: 'التقارير', module: 'analytics' },
+  // every report is its own menu item, grouped under «التقارير» (R-01…R-17)
+  ...reports.map((r, i, all): NavItem => ({ to: `/reports/${r.id}`, label: `${r.code} — ${r.title}`, icon: FileBarChart, section: i === 0 || all[i - 1].group !== r.group ? `تقارير ${r.group}` : undefined, module: 'analytics' })),
   { to: '/settings', label: 'إعدادات النظام', icon: Settings2, section: 'الإعدادات', module: 'settings-access' },
   { to: '/settings/permissions', label: 'مصفوفة الصلاحيات', icon: Lock, module: 'settings-access' },
   { to: '/settings/numbering', label: 'الترقيم', icon: FileClock, module: 'settings-access' },
