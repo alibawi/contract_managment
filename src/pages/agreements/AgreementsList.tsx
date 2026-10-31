@@ -18,7 +18,7 @@ interface Row { id: string; c: Contract; party: string; s: AgreementStats; left?
 
 /** A6 — agreements list with utilisation (by the fulfillment basis), remaining commitment and module KPIs. */
 export default function AgreementsList() {
-  const { db } = useStore()
+  const { db, can } = useStore()
   const [tab, setTab] = useState<'all' | 'sales' | 'purchase'>('all')
   const [f, setF] = useState({ status: '', mode: '', partner: '' })
   const set = (k: keyof typeof f) => (v: string) => setF((x) => ({ ...x, [k]: v }))
@@ -62,7 +62,7 @@ export default function AgreementsList() {
   const partnerIds = new Set(all.map((r) => r.c.counterpartyId))
   return (
     <ListView
-      title="اتفاقيات المبيعات والمشتريات" crumbs={[{ label: 'الاتفاقيات' }]} rows={rows} columns={cols} rowTo={(r) => `/contracts/${r.id}`} canNew={false}
+      title="اتفاقيات المبيعات والمشتريات" crumbs={[{ label: 'الاتفاقيات' }]} rows={rows} columns={cols} rowTo={(r) => `/contracts/${r.id}`} newTo="/contracts/new" newLabel="اتفاقية جديدة" canNew={can('Contracts.Create')}
       loading={api.loading} error={api.error} onRetry={api.reload}
       searchText={(r) => `${r.c.number} ${r.c.title} ${r.party}`}
       kpis={all.length ? [
@@ -92,7 +92,7 @@ export default function AgreementsList() {
         <FilterSelect label="النمط" value={f.mode} onChange={set('mode')} options={[{ value: 'Specific', label: 'اتفاقية محددة' }, { value: 'General', label: 'اتفاقية عامة (مكافأة)' }]} />
         <FilterSelect label="الطرف" value={f.partner} onChange={set('partner')} options={opt(db.partners.filter((p) => partnerIds.has(p.id)), (p) => p.name)} />
       </>}
-      emptyTitle="لا توجد اتفاقيات مطابقة" emptyHint="الاتفاقيات تُنشأ من «عقد جديد» بنوع اتفاقية."
+      emptyTitle="لا توجد اتفاقيات مطابقة" emptyHint="أنشئ اتفاقية من «اتفاقية جديدة» واختر نوع عقد من نمط اتفاقية."
     />
   )
 }
